@@ -147,6 +147,7 @@ git branch <plugin>/<operation>/<branch>/backup-<TIMESTAMP>
 ## Code Style
 
 - Use Node.js for scripts requiring cross-platform compatibility
+- **Always use the `node:` protocol for built-in modules** (e.g., `import fs from 'node:fs'` instead of `import fs from 'fs'`). This makes it explicit that the module is a Node.js built-in and not an npm package, improving code clarity and preventing potential naming conflicts
 - Prefer semantic analysis over pattern matching when resolving conflicts
 - Flag uncertain situations for human review rather than guessing
 - Keep commands focused on single responsibilities
