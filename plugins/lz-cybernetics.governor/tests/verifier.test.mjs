@@ -198,6 +198,28 @@ describe('detectLoop', () => {
     assert.ok(result.loop_detected);
     assert.ok(result.pattern.includes('Oscillation'));
   });
+
+  test('oscillation pattern tracks pattern_tools and current_continues_pattern', () => {
+    const now = Date.now();
+    const history = [
+      { tool: 'Read', input: {}, timestamp: now - 4000, failed: false },
+      { tool: 'Edit', input: {}, timestamp: now - 3000, failed: false },
+      { tool: 'Read', input: {}, timestamp: now - 2000, failed: false },
+      { tool: 'Edit', input: {}, timestamp: now - 1000, failed: false },
+    ];
+
+    // Current tool is Read (part of the pattern)
+    const resultContinues = detectLoop(history, { tool: 'Read', input: {} });
+    assert.ok(resultContinues.loop_detected);
+    assert.deepEqual(resultContinues.pattern_tools, ['Read', 'Edit']);
+    assert.equal(resultContinues.current_continues_pattern, true);
+
+    // Current tool is Bash (NOT part of the pattern - breaks the loop)
+    const resultBreaks = detectLoop(history, { tool: 'Bash', input: { command: 'npm test' } });
+    assert.ok(resultBreaks.loop_detected);
+    assert.deepEqual(resultBreaks.pattern_tools, ['Read', 'Edit']);
+    assert.equal(resultBreaks.current_continues_pattern, false);
+  });
 });
 
 describe('detectContradiction', () => {
@@ -277,7 +299,7 @@ describe('makeDecision', () => {
     assert.ok(decision.systemMessage.includes('MISSING'));
   });
 
-  test('loop detected escalates', () => {
+  test('loop detected escalates when current action continues pattern', () => {
     const errorVector = {
       missing_fields: [],
       invalid_values: [],
@@ -291,11 +313,36 @@ describe('makeDecision', () => {
       pattern: 'Test oscillation',
       consecutive_failures: 3,
       similar_calls_count: 5,
+      pattern_tools: ['Read', 'Edit'],
+      current_continues_pattern: true, // Current action continues the loop
     };
 
     const decision = makeDecision(errorVector, loopInfo);
     assert.equal(decision.action, Decision.ESCALATE);
     assert.ok(decision.systemMessage.includes('Oscillation'));
+  });
+
+  test('loop detected allows when current action breaks pattern', () => {
+    const errorVector = {
+      missing_fields: [],
+      invalid_values: [],
+      forbidden_actions: [],
+      loop_detected: false,
+      contradiction: null,
+    };
+
+    const loopInfo = {
+      loop_detected: true,
+      pattern: 'Oscillation: Read <-> Edit',
+      consecutive_failures: 0,
+      similar_calls_count: 4,
+      pattern_tools: ['Read', 'Edit'],
+      current_continues_pattern: false, // Current action (e.g., Bash) breaks the loop
+    };
+
+    const decision = makeDecision(errorVector, loopInfo);
+    assert.equal(decision.action, Decision.ALLOW);
+    assert.ok(decision.systemMessage.includes('Pattern detected but current action allowed'));
   });
 
   test('contradiction denies', () => {

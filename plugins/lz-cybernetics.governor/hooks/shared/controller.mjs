@@ -39,12 +39,19 @@ export function makeDecision(errorVector, loopInfo) {
     return decision;
   }
 
-  // Check for loop/oscillation - escalate or deny
+  // Check for loop/oscillation - escalate only if current action continues the pattern
   if (loopInfo && loopInfo.loop_detected) {
-    decision.action = Decision.ESCALATE;
-    decision.reason = loopInfo.pattern;
-    decision.systemMessage = formatEscalationMessage(loopInfo);
-    return decision;
+    if (loopInfo.current_continues_pattern) {
+      // Current action would continue the loop - block it
+      decision.action = Decision.ESCALATE;
+      decision.reason = loopInfo.pattern;
+      decision.systemMessage = formatEscalationMessage(loopInfo);
+      return decision;
+    } else {
+      // Current action breaks the loop - allow it but note the pattern was detected
+      decision.systemMessage = formatBreakoutMessage(loopInfo);
+      // Don't return - continue with other checks but allow the tool
+    }
   }
 
   // Check for missing required fields
@@ -175,6 +182,26 @@ function formatEscalationMessage(loopInfo) {
     '',
     `Consecutive failures: ${loopInfo.consecutive_failures}`,
     `Similar calls in window: ${loopInfo.similar_calls_count}`,
+  ];
+
+  return lines.join('\n');
+}
+
+/**
+ * Format breakout message when pattern detected but current action breaks it
+ * @param {object} loopInfo - Loop detection information
+ * @returns {string} Formatted message
+ */
+function formatBreakoutMessage(loopInfo) {
+  const patternTools = loopInfo.pattern_tools || [];
+  const lines = [
+    '[LZ-CYBERNETICS] Pattern detected but current action allowed.',
+    '',
+    `DETECTED PATTERN: ${loopInfo.pattern}`,
+    `PATTERN TOOLS: ${patternTools.join(', ') || 'unknown'}`,
+    '',
+    'Your current action uses a different tool, which breaks the loop.',
+    'Proceeding with this approach.',
   ];
 
   return lines.join('\n');

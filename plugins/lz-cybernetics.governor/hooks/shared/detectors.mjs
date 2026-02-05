@@ -45,6 +45,8 @@ export function detectLoop(history, currentCall) {
     consecutive_failures: 0,
     similar_calls_count: 0,
     pattern: null,
+    pattern_tools: [],              // Tools involved in detected pattern
+    current_continues_pattern: false, // Whether current call continues the loop
   };
 
   if (!history || history.length === 0) {
@@ -84,6 +86,8 @@ export function detectLoop(history, currentCall) {
     if (last4[0].tool === last4[2].tool && last4[1].tool === last4[3].tool && last4[0].tool !== last4[1].tool) {
       result.loop_detected = true;
       result.pattern = `Oscillation: ${last4[0].tool} <-> ${last4[1].tool}`;
+      result.pattern_tools = [last4[0].tool, last4[1].tool];
+      result.current_continues_pattern = result.pattern_tools.includes(currentCall.tool);
     }
   }
 
@@ -91,12 +95,16 @@ export function detectLoop(history, currentCall) {
   if (result.similar_calls_count >= limits.maxRetries) {
     result.loop_detected = true;
     result.pattern = `Repeated call: ${currentCall.tool} (${result.similar_calls_count} times)`;
+    result.pattern_tools = [currentCall.tool];
+    result.current_continues_pattern = true; // By definition, same call continues pattern
   }
 
   // Detect consecutive failures
   if (consecutiveFailures >= limits.maxConsecutiveFailures) {
     result.loop_detected = true;
     result.pattern = `Consecutive failures: ${currentCall.tool} (${consecutiveFailures} times)`;
+    result.pattern_tools = [currentCall.tool];
+    result.current_continues_pattern = true; // By definition, same tool continues pattern
   }
 
   return result;
