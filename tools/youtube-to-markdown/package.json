@@ -1,0 +1,14 @@
+{
+  "name": "youtube-to-markdown",
+  "version": "1.0.0",
+  "description": "YouTube transcript extractor using InnerTube API - no browser needed",
+  "type": "module",
+  "scripts": {
+    "transcript": "node youtube-to-markdown.mjs",
+    "to-markdown": "node transcript-to-markdown.mjs"
+  },
+  "dependencies": {
+    "get-youtube-chapters": "^2.0.0",
+    "youtubei.js": "^16.0.1"
+  }
+}
