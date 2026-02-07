@@ -1,0 +1,17 @@
+{
+  "name": "url-to-markdown",
+  "version": "1.0.0",
+  "description": "Web page to Markdown converter using Readability and Turndown",
+  "type": "module",
+  "scripts": {
+    "convert": "node url-to-markdown.mjs"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "header-generator": "^2.1.80",
+    "impit": "^0.9.1",
+    "linkedom": "^0.18.0",
+    "turndown": "^7.2.0",
+    "turndown-plugin-gfm": "^1.0.2"
+  }
+}
