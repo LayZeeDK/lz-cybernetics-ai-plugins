@@ -826,7 +826,7 @@ Stop early if:
 
 ## When NOT to Use Ralph
 
-From Pocock's video and discussion, Ralph is not universally applicable:
+From Pocock's video and discussion, Ralph is not universally applicable. For alternative tools that may be better suited in these scenarios, see [ALTERNATIVES.md](./ALTERNATIVES.md#decision-matrix-when-to-use-what).
 
 ### Subjective Tasks
 

@@ -797,7 +797,7 @@ Document what you changed in progress.txt.
 
 ## Framework Implementations
 
-Several frameworks and tools have implemented Ralph Loop support, demonstrating its generality beyond bash scripts.
+Several frameworks and tools have implemented Ralph Loop support, demonstrating its generality beyond bash scripts. For a broader comparison including dedicated orchestrators (ralph-orchestrator, Ralph TUI), spec-driven tools (Spec Kit, GSD), and the full agentic coding landscape, see [ALTERNATIVES.md](./ALTERNATIVES.md).
 
 ### LangChain / DeepAgents
 

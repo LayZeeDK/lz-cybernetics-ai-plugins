@@ -132,6 +132,8 @@ This mindset shift has practical consequences. When Huntley was told that Rust w
 
 ## Ralph vs Traditional ReAct Agents
 
+For a broader comparison covering Ralph implementations, spec-driven tools, IDE-integrated agents, and the full agentic coding landscape, see [ALTERNATIVES.md](./ALTERNATIVES.md).
+
 ### The Externalization Paradigm
 
 The Alibaba Cloud analysis frames Ralph as a shift from internalized to externalized control. Traditional agent architectures (ReAct, Plan-and-Execute) operate within the context window, relying on the LLM's self-assessment to decide when to stop. Ralph externalizes everything:

@@ -187,7 +187,7 @@ Major tech publications covered the Ralph Wiggum technique:
 
 ### January-February 2026 - Framework Adoption
 
-The technique was adopted into multiple frameworks and tools:
+The technique was adopted into multiple frameworks and tools. For detailed analysis of each implementation including dedicated orchestrators (ralph-orchestrator, Ralph TUI), spec-driven tools, and the broader agentic coding landscape, see [ALTERNATIVES.md](./ALTERNATIVES.md).
 
 | Framework | Implementation |
 |-----------|---------------|
