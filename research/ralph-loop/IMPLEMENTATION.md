@@ -109,7 +109,7 @@ The `IMPLEMENTATION_PLAN.md` file persists on disk between iterations and acts a
 
 ## Context Engineering
 
-Context engineering is the foundational discipline that makes Ralph effective. Every design decision in the loop -- fresh context per iteration, subagent delegation, small tasks -- serves context management.
+Context engineering is the foundational discipline that makes Ralph effective. Every design decision in the loop -- fresh context per iteration, subagent delegation, small tasks -- serves context management. For token tracking zones and context utilization benchmarks, see [METRICS.md](./METRICS.md).
 
 > "The name of the game is that you only have approximately 170k of context window to work with. So it's essential to use as little of it as possible. The more you use the context window, the worse the outcomes you'll get." -- Geoffrey Huntley, quoted in [Advanced Context Engineering](./sources/blog-advanced-context-engineering/)
 

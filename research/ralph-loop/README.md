@@ -12,6 +12,7 @@ A knowledge base documenting the Ralph Wiggum Loop technique for autonomous AI c
 | [BEST-PRACTICES.md](./BEST-PRACTICES.md) | Practical guidance for effective Ralph usage. Covers Pocock's 11 Tips, backpressure engineering, prompt design patterns, context management strategies, tool integration, and recovery patterns |
 | [HISTORY.md](./HISTORY.md) | Timeline and evolution from June 2025 SF meetup through mainstream recognition. Covers key milestones, case studies (Cursed Lang, BAML, Parquet, React refactoring), and community adoption |
 | [ALTERNATIVES.md](./ALTERNATIVES.md) | Comparative analysis of Ralph implementations, spec-driven development tools, IDE-integrated agents, and the agentic coding landscape as of February 2026. Covers the context-clearing spectrum, decision matrix, and hybrid workflows |
+| [METRICS.md](./METRICS.md) | Measurement framework for evaluating Ralph Loop effectiveness. Covers core metrics (cost, time, quality, reliability), benchmarking methodology, token tracking, case study data, ROI calculation, and telemetry comparison across implementations |
 | [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md) | Analysis through first-order, second-order, and management cybernetics frameworks. Maps feedback loops, requisite variety, observation paradoxes, and the Viable System Model onto Ralph patterns |
 | [sources/](./sources/) | Primary source materials (blogs, videos, transcripts) |
 

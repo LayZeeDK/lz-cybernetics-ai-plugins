@@ -764,6 +764,8 @@ The prompt says "run tests" generically. `AGENTS.md` specifies the actual comman
 
 ## Cost Management
 
+For a comprehensive measurement framework and ROI calculation, see [METRICS.md](./METRICS.md).
+
 ### Model Selection
 
 | Provider/Plan | Approximate Cost | Best For |

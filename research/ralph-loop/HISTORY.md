@@ -201,6 +201,8 @@ Matt Pocock also published "[11 Tips For AI Coding With Ralph Wiggum](./sources/
 
 ## Case Studies
 
+For a consolidated case study data table and metrics framework, see [METRICS.md](./METRICS.md).
+
 ### Cursed Lang: Three Months of Autonomous Compiler Development
 
 **Timeline:** June-September 2025
