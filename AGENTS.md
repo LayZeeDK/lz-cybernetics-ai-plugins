@@ -152,6 +152,66 @@ git branch <plugin>/<operation>/<branch>/backup-<TIMESTAMP>
 - Flag uncertain situations for human review rather than guessing
 - Keep commands focused on single responsibilities
 
+### Research Tools
+
+Two tools in `tools/` support dedicated research by extracting web and video content into Markdown files that Claude can read and analyze.
+
+#### url-to-markdown
+
+Fetches a web page, extracts article content with Mozilla Readability, and converts it to clean Markdown.
+
+```bash
+node tools/url-to-markdown/url-to-markdown.mjs <url> --output <path>
+```
+
+**When to use:**
+
+- WebFetch returns 403/429 (bot protection blocking AI agents)
+- WebFetch returns a summary but you need full, unabridged article content
+- Dedicated research requiring raw content rather than Haiku-summarized text
+
+**Capabilities:** Chrome-like TLS/HTTP2 fingerprints via `impit` + realistic browser headers via `header-generator` bypass most bot detection (Cloudflare, Akamai, DataDome). Readability extraction strips navigation, ads, and boilerplate.
+
+**Limitations:** Static HTML only. Pages requiring JavaScript rendering need Playwriter (available as a skill, MCP, npm package, and CLI) as a last-resort fallback.
+
+**Options:** `--json` saves intermediate JSON metadata alongside the Markdown file. `--output <prefix>` controls the output path (produces `<prefix>.md`).
+
+See `tools/url-to-markdown/README.md` for technical details on why Node.js built-in TLS cannot mimic Chrome and how `impit` solves this.
+
+#### youtube-to-markdown
+
+Extracts a YouTube video transcript and metadata using the InnerTube API (no browser required), then converts to structured Markdown with chapters and timestamped links.
+
+```bash
+node tools/youtube-to-markdown/youtube-to-markdown.mjs <video-id-or-url> --output <path>
+```
+
+**When to use:**
+
+- Researching video content (conference talks, tutorials, presentations)
+- Extracting a full transcript for analysis or summarization
+- Getting structured content from a video without watching it
+
+**Capabilities:** Chapter detection from video descriptions, timestamped YouTube links in headings, intelligent paragraph grouping with sentence-boundary detection. Includes `summarize-transcript.prompt.md` as an AI prompt template.
+
+**Limitations:** Depends on the video having captions available. Auto-generated YouTube chapters are not accessible via the API; only description-based chapters are extracted.
+
+**Options:** `--json` saves intermediate JSON with raw transcript data. `--output <prefix>` controls the output path (produces `<prefix>.md`).
+
+A secondary script converts existing JSON to Markdown: `node tools/youtube-to-markdown/transcript-to-markdown.mjs <path>.json`
+
+See `tools/youtube-to-markdown/README.md` for full documentation.
+
+### URL Fetching in Scripts
+
+When writing tools or scripts that fetch URLs, handle bot protection gracefully:
+
+1. Use `impit` + `header-generator` for Chrome-like TLS/HTTP2 fingerprints and realistic browser headers (see `tools/url-to-markdown/url-to-markdown.mjs` for the implementation pattern)
+2. Detect 403/429 responses and log actionable warnings with alternative suggestions
+3. Suggest Playwriter as a last-resort fallback in warning messages
+
+For details on the TLS fingerprinting approach, see `tools/url-to-markdown/README.md`.
+
 ### No Emojis in Scripts
 
 **Never use emojis or Unicode symbols in scripts.** Windows console uses codepage cp1252 by default, which cannot encode multi-byte UTF-8 characters.
