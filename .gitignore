@@ -17,6 +17,7 @@ tmpclaude-*-cwd/
 !tmpclaude--cwd/
 nul
 NUL
+tmp/
 /CLAUDE.local.md
 /.claude/CLAUDE.local.md
 /.claude/settings.local.json
