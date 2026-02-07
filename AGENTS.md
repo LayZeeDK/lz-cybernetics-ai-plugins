@@ -185,6 +185,17 @@ print("✅ Build successful!")
 print("[SUCCESS] Build successful!")
 ```
 
+## Git Conventions
+
+### No AI Attribution in Commits
+
+**Never add AI attribution to commits or PRs.** Do not include:
+- `Co-Authored-By: Claude ...` or any variant
+- `Generated with [Claude Code]` or similar tool attribution lines
+- Any AI tool signatures, watermarks, or credits
+
+Write commit messages that describe the change, not the tool used to make it.
+
 ## Testing Changes
 
 After modifying plugin files, verify:
