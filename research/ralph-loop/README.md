@@ -27,10 +27,10 @@ while :; do cat PROMPT.md | claude ; done
 
 See [sources/](./sources/) for the complete collection of primary source materials with transcripts, summaries, and links.
 
-Additional references:
+Additional references (full source materials in [sources/](./sources/)):
 
-- [Geoffrey Huntley - Everything is a Ralph Loop](https://ghuntley.com/loop/)
-- [GitHub - how-to-ralph-wiggum](https://github.com/ghuntley/how-to-ralph-wiggum)
-- [Alibaba Cloud - From ReAct to Ralph Loop](https://www.alibabacloud.com/blog/from-react-to-ralph-loop-a-continuous-iteration-paradigm-for-ai-agents_602799)
-- [DEV Community - 2026: The Year of the Ralph Loop Agent](https://dev.to/alexandergekov/2026-the-year-of-the-ralph-loop-agent-1gkj)
-- [AI Hero - 11 Tips For AI Coding With Ralph Wiggum](https://www.aihero.dev/tips-for-ai-coding-with-ralph-wiggum)
+- [Everything is a Ralph Loop](./sources/blog-everything-is-a-ralph-loop/) -- Geoffrey Huntley
+- [The Ralph Playbook](./sources/repo-how-to-ralph-wiggum/) -- Clayton Farr
+- [From ReAct to Ralph Loop](./sources/blog-react-to-ralph-loop/) -- DanKun (Alibaba Cloud)
+- [2026: The Year of the Ralph Loop Agent](./sources/blog-year-of-ralph-loop-agent/) -- Alexander Gekov
+- [11 Tips For AI Coding With Ralph Wiggum](./sources/blog-tips-for-ai-coding-ralph/) -- Matt Pocock (AI Hero)

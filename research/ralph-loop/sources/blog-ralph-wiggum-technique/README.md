@@ -38,3 +38,5 @@ The original blog post introducing the Ralph Wiggum technique -- a simple Bash l
 - [Cursed Lang](../blog-cursed-lang/) -- Language created by running Ralph for three months
 - [A Brief History of Ralph](../blog-brief-history-of-ralph/) -- Comprehensive history of the technique
 - [Ralph Wiggum Showdown](../video-ralph-wiggum-showdown/) -- Video comparing bash-loop vs plugin approaches
+- [Everything is a Ralph Loop](../blog-everything-is-a-ralph-loop/) -- Huntley's philosophical follow-up on Ralph as a paradigm shift
+- [The Ralph Playbook](../repo-how-to-ralph-wiggum/) -- Community playbook organizing the Ralph technique into a structured guide
