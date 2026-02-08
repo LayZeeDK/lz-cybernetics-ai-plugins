@@ -416,6 +416,8 @@ Intentional compaction means pausing your work, writing everything done so far t
 
 All of these flood the context window. Compaction distills them into structured artifacts. A good compaction output includes: the end goal, the approach being taken, the steps done so far, and the current failure being worked on.
 
+**Task Spawning as Automatic Context Rotation:** When the orchestrator delegates work via the Task tool, each worker starts with a fresh 200K context -- effectively performing automatic context rotation without explicit compaction. This means the orchestrator can continue operating even at high context utilization (>60%) by delegating implementation work to fresh workers. However, the orchestrator itself still requires periodic compaction for its dispatch logic. The best practice becomes: compact the orchestrator's meta-state (escalation history, pattern observations), but delegate implementation work to fresh-context Tasks rather than performing it in the degraded orchestrator context. See `research/task-spawning/TASK-SPAWNING-GUIDE.md`.
+
 ### Subagent Deployment Strategy
 
 Subagents are not about anthropomorphizing roles. They are about **context control**.
@@ -444,6 +446,8 @@ Optimize your context window in this priority order:
 As Huntley puts it, quoted by Horthy:
 
 > "The name of the game is that you only have approximately 170k of context window to work with. So it's essential to use as little of it as possible. The more you use the context window, the worse the outcomes you'll get." -- [Huntley, quoted in Horthy](./sources/blog-advanced-context-engineering/)
+
+**Multi-Window Budgeting with Task Spawning:** Token budgeting extends beyond the single 200K window when Task spawning is available. The total token budget for a Ralph iteration becomes: `orchestrator_context + (N_workers x 200K) + (N_workers x 20K_overhead)`. For a typical batch of 5 workers, this is approximately 1.1M tokens of effective working memory. Budget planning should account for the 3-4x token multiplier (each worker's prompt includes the work directive, relevant state, and tool overhead). See `research/task-spawning/TASK-SPAWNING-GUIDE.md` for the full cost model.
 
 ### High-Leverage Review Points
 

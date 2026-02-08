@@ -113,6 +113,20 @@ The Ralph Playbook's use of massive parallel subagent counts is a direct applica
 
 500 parallel subagents each with ~156kb of clean context represent a massive injection of controller variety -- roughly 78MB of total analysis capacity per iteration. This is how the controller (Ralph) achieves requisite variety against a complex codebase (the environment). The main agent acts as a scheduler, not a worker -- precisely the cybernetic pattern of a controller that delegates measurement to many sensors while retaining centralized decision-making.
 
+#### Task Spawning as Distributed Variety
+
+Orchestrator-spawned subagents and Task-spawned workers are both variety amplifiers, but they differ in cybernetic topology:
+
+| Property | Orchestrator Subagents | Task-Spawned Workers |
+|----------|----------------------|---------------------|
+| Context sharing | Shared with orchestrator | Isolated (200K fresh) |
+| Bias contamination | Amplify orchestrator's bias | Independent perspective |
+| Variety purity | Lower (shared constraints) | Higher (independent) |
+| Coordination cost | Implicit (shared context) | Explicit (state files, prompts) |
+| Failure isolation | Can corrupt orchestrator | Contained to worker |
+
+Task spawning shifts the cybernetic topology from a centralized single-context comparator to a distributed system with eventual consistency. Each Task worker is an independent variety generator that cannot be contaminated by the orchestrator's accumulated bias. The trade-off is coordination cost: workers require explicit state contracts where subagents benefit from implicit context sharing. See [PLUGIN-GUIDE.md](./PLUGIN-GUIDE.md#orchestrator-worker-state-contract) for the contract skeleton and [TASK-SPAWNING-GUIDE.md](../task-spawning/TASK-SPAWNING-GUIDE.md) for the implementation model.
+
 #### Compaction as Controlled Variety Reduction
 
 Variety amplification must be balanced by variety reduction, or the system drowns in information. Dex Horthy's "frequent intentional compaction" is the variety attenuator:
@@ -207,6 +221,8 @@ Huntley's "tune like a guitar" metaphor captures ultrastable behavior precisely:
 Huntley's instruction to "resolve the problem so it never happens again" is the ultrastable imperative: don't just fix this error (homeostatic), change the structure so this *class* of error cannot recur (ultrastable). The guardrail is the structural change that persists across context rotations.
 
 The cybernetic implication: Ralph currently relies on the human operator to perform ultrastable adaptation. A system that detects limit cycles (the step-function trigger) and initiates structural change automatically -- regenerating the plan, rotating the prompt strategy, or escalating with a diagnostic -- would bring ultrastability inside the loop.
+
+Task spawning provides a path toward automated ultrastability. When the orchestrator detects a limit cycle (repeated E-III/E-IV escalations without progress), it can spawn a structural-change Task with a fresh 200K context dedicated to analyzing the failure pattern and proposing architectural modifications. This fresh-context worker is not subject to the same bias accumulation that caused the limit cycle, making it a more reliable source of ultrastable adaptation than the degraded orchestrator performing self-analysis. See [TASK-SPAWNING-GUIDE.md](../task-spawning/TASK-SPAWNING-GUIDE.md).
 
 > **Applied in:** [Ultrastable Iteration](#ultrastable-iteration) in the Plugin Development section.
 
@@ -540,6 +556,8 @@ The critical distinction is architectural: **backpressure forces correction with
 
 Pocock's cost-awareness is an informal algedonic signal -- the human feeling "pain" at token expenditure. A formalized algedonic channel would make this automatic: detect the pain condition programmatically and escalate without requiring the human to be watching.
 
+Task spawning enables implementation of an algedonic monitor -- a dedicated background Task that watches for catastrophic conditions (cost explosion, infinite loops, security violations) and can halt primary work by writing to a shared state file. This is analogous to Beer's algedonic channel in the Viable System Model: an emergency signal that bypasses the normal management hierarchy. The monitor Task runs with fresh context and is immune to the orchestrator's accumulated blind spots.
+
 > **Applied in:** [Algedonic Channel](#algedonic-channel) in the Plugin Development section.
 
 ### POSIWID
@@ -778,6 +796,8 @@ Approach A fails -> Try B -> B fails -> Try A -> A fails -> ...
 **Cybernetic diagnosis:** Controller variety decreasing (context filling with noise) while environmental variety stays constant (codebase complexity unchanged).
 
 **Solution:** Context rotation is variety injection -- a fresh context window restores full controller variety. Ralph's entire architecture is designed around this: one task per iteration, then reset.
+
+Context rotation in the original Ralph loop is *sequential* variety injection -- one context replaces another. Task spawning enables *parallel* variety injection -- multiple fresh contexts operate simultaneously, each exploring independent solution paths. This is the cybernetic equivalent of moving from a single comparator sampling solutions sequentially to an array of comparators operating in parallel, increasing the system's instantaneous variety by a factor of the worker count (bounded by the practical limit of ~7 concurrent Tasks).
 
 > **Principle violated:** [Requisite Variety](#requisite-variety-ashbys-law) -- controller variety decreasing while environmental variety stays constant. See also [Channel Capacity](#channel-capacity-and-the-context-window) for the information-theoretic framing.
 

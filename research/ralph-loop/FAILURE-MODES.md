@@ -45,6 +45,16 @@ Each iteration of the loop is a fresh context window. The agent reads current st
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md#state-persistence-and-memory-management) for the full externalization architecture.
 
+#### Task Spawning Implications for Context Rot
+
+With Task spawning (`Bash(claude -p)`), context rot is now bounded per-Task rather than per-session. Each spawned worker operates within its own 200K token window, meaning that a single worker's context degradation cannot infect sibling workers or the orchestrator.
+
+The detection thresholds (60%/80%) become per-worker metrics rather than session-wide measurements. Each worker independently tracks its own token consumption and triggers rotation when its local context fills up. This is a structural improvement: in a single-agent Ralph loop, context rot is bounded per-iteration; in a multi-worker topology, it is bounded per-Task.
+
+However, **orchestrator context rot remains the primary risk** that Task spawning does not resolve. The orchestrator accumulates Task results, status updates, and coordination state in its own 200K window. As the number of delegated Tasks grows, the orchestrator's context fills with summaries and metadata, degrading its ability to make correct dispatching decisions. This is the most dangerous form of context rot in a Task-spawning architecture because it affects all downstream work, not just one task.
+
+See [research/task-spawning/TASK-SPAWNING-GUIDE.md](../task-spawning/TASK-SPAWNING-GUIDE.md) for Task spawning mechanics.
+
 ### Context Pollution / "The Gutter"
 
 **What happens:** Failed attempts, unrelated code, error messages, and noise accumulate in the context window, confusing the model. Once polluted, the model keeps referencing bad context. Gekov captures this with the bowling metaphor originated by Huntley:
@@ -481,6 +491,8 @@ The primary automated detection system, implemented in the ralph-wiggum-cursor s
 └─────────────────────────────────────┘
 ```
 
+In a multi-worker topology, gutter detection operates at two levels: (1) per-worker, where individual Tasks may enter repetitive failure loops within their 200K window, and (2) orchestrator-level, where the dispatcher itself may fail to recognize that delegated work is stalled. Worker-level gutters are bounded by Task timeout; orchestrator-level gutters require external monitoring or an algedonic signal channel (see [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md)).
+
 ### Progress Tracking
 
 Monitor for forward motion via the progress file and git history:
@@ -532,6 +544,77 @@ Each failure mode becomes a guardrail through observation:
 4. **Repeat** as needed -- prompts evolve through observed failure patterns
 
 See [BEST-PRACTICES.md](./BEST-PRACTICES.md#tuning-and-guardrails) for the full tuning methodology.
+
+## Task Spawning Failure Modes
+
+The following failure modes are specific to multi-worker topologies where an orchestrator delegates work to spawned Tasks via `Bash(claude -p)`. These do not replace the single-agent failure modes above but layer on top of them.
+
+### Result Truncation Loss
+
+**What happens:** Task results may be silently truncated when exceeding the result buffer. The orchestrator receives incomplete data without knowing it. Because `Bash(claude -p)` returns output through stdout capture, large results are clipped at the buffer boundary with no truncation indicator.
+
+**Symptoms:**
+
+- Orchestrator makes decisions based on partial information
+- Missing items from summaries or lists returned by workers
+- Downstream tasks fail because prerequisites were reported as complete but were not
+
+**Mitigation:**
+
+- Workers should write full results to state files on disk and return only a brief summary with the file path (see [PLUGIN-GUIDE.md](./PLUGIN-GUIDE.md#orchestrator-worker-state-contract) for the state contract skeleton)
+- Use structured output (JSON with a `truncated: false` field) so the orchestrator can verify completeness
+- Keep Task result payloads small: return a file reference, not the file contents
+
+### Worker Isolation Paradox
+
+**What happens:** Fresh-context workers have no memory of previously rejected approaches, risking repetition of known-bad strategies. The very property that makes Task spawning valuable (clean context) also means workers are ignorant of what has already been tried and failed.
+
+**Symptoms:**
+
+- Multiple workers independently attempt the same broken approach
+- Previously rejected strategies resurface in new workers
+- Wasted tokens and time re-exploring dead ends
+
+**Mitigation:**
+
+- Maintain a `rejection-notes.md` file that workers read at startup, documenting approaches that failed and why
+- The orchestrator should include negative constraints ("do NOT attempt X, it fails because Y") in Task prompts
+- Use the tuning philosophy: each failed approach becomes a "sign" that persists across worker boundaries
+
+### Distributed Gutter Blindness
+
+**What happens:** The orchestrator cannot directly observe when a worker has entered an unrecoverable state (the "gutter" in Ralph terminology). Workers may exhaust their context without signaling failure. Unlike single-agent Ralph where the stream parser monitors for gutter signals in real time, Task workers run opaquely from the orchestrator's perspective.
+
+**Symptoms:**
+
+- Workers run to timeout without producing useful output
+- Orchestrator waits indefinitely for results that will never arrive
+- Silent failures: worker enters gutter, produces garbage output, orchestrator accepts it as valid
+
+**Mitigation:**
+
+- Workers should emit structured status at regular checkpoints (write to a status file that the orchestrator can poll)
+- Orchestrator should set hard timeouts for each Task and treat timeout as failure
+- Use the algedonic signal pattern: workers write a `GUTTER` signal file when they detect their own context pollution, allowing the orchestrator to abort early
+- Implement a heartbeat mechanism: workers update a timestamp file periodically; stale timestamps indicate a stalled worker
+
+### Bash(claude -p) Recursion Explosion
+
+**What happens:** Without depth guards, nested `Bash(claude -p)` calls create exponential cost growth. Each level spawns a fresh 200K context with approximately 20K tokens of overhead (system prompt, CLAUDE.md, AGENTS.md loading). A 3-level deep recursion spawns workers that spawn workers, with cost multiplying at each level.
+
+**Symptoms:**
+
+- Unexpected cost spikes from deeply nested Task spawning
+- Workers spawning their own sub-workers without orchestrator awareness
+- Context overhead (20K per level) consuming a significant fraction of available tokens
+- Cascading failures when deeply nested workers timeout, causing parent workers to timeout
+
+**Mitigation:**
+
+- Enforce a maximum nesting depth (recommended: 2 levels) via environment variable or convention
+- Include an explicit instruction in worker prompts: "Do NOT spawn sub-tasks via `Bash(claude -p)`"
+- Track recursion depth by passing a `TASK_DEPTH` environment variable that increments at each level
+- The orchestrator should be the only agent authorized to spawn Tasks; workers should escalate complex sub-problems back to the orchestrator rather than self-delegating
 
 ## Sources
 

@@ -413,6 +413,48 @@ When bound to localhost, no token is required. When bound to a network interface
 
 Additional controls: JSONL audit logging for all remote actions, and session files protected with restrictive permissions (directories: `0o700`, files: `0o600` -- owner-only access).
 
+## Task Spawning Security Considerations
+
+Task spawning introduces a distributed execution model that creates new security surfaces not present in single-context Ralph loops. See `research/task-spawning/TASK-SPAWNING-GUIDE.md` for Task spawning mechanics.
+
+### Shared Filesystem (No Worker Isolation)
+
+All Task workers share the orchestrator's working directory (CWD). There is no filesystem isolation between sibling workers or between workers and the orchestrator. This means:
+- Workers can read and write each other's state files
+- A compromised or misbehaving worker can corrupt shared state
+- Covert channels between workers are trivially possible via the filesystem
+- **Mitigation:** Use per-worker subdirectories with naming conventions (e.g., `.task-state/<worker-id>/`) and validate state file integrity in the orchestrator before consuming worker results. See [PLUGIN-GUIDE.md](./PLUGIN-GUIDE.md#orchestrator-worker-state-contract) for the state contract skeleton
+
+### Permission Inheritance
+
+Task workers inherit their parent's `--allowed-tools` restrictions and cannot escalate beyond them. However:
+- There is no mechanism to *further restrict* a worker below the parent's permission level
+- `Bash(claude -p)` nested processes inherit the full environment, including any API keys or tokens in environment variables
+- **Mitigation:** Principle of least privilege at the orchestrator level; avoid passing sensitive environment variables to worker prompts
+
+### Aggregate Resource Limits
+
+Claude Code enforces token limits per-session but not across a task tree. A malicious or buggy orchestrator can spawn many workers, each consuming its full 200K allocation:
+- No aggregate cost ceiling across parent + children
+- No mechanism to halt all children if the parent is terminated
+- Recursive `Bash(claude -p)` nesting multiplies cost exponentially
+- **Mitigation:** Enforce a maximum nesting depth (recommended: 2 levels) and a maximum concurrent worker count in orchestrator logic; monitor total token consumption via billing dashboards
+
+### Audit Trail Fragmentation
+
+Each Task worker generates its own conversation log, separate from the orchestrator's:
+- No unified audit trail across the task tree
+- Difficult to reconstruct the full execution sequence for post-incident analysis
+- Worker logs may be discarded when the worker completes
+- **Mitigation:** Workers should write structured summaries to a shared audit directory; orchestrator should log all Task dispatches and results
+
+### Environment Variable Leakage
+
+Environment variables set in the orchestrator's shell are inherited by all Task workers and their `Bash(claude -p)` children:
+- API keys, tokens, and secrets propagate down the task tree
+- Workers may inadvertently log or expose these values
+- **Mitigation:** Sanitize the environment before spawning workers; use file-based secret injection with restricted permissions rather than environment variables
+
 ## Recommended Security Configurations
 
 ### For HITL Ralph Loops

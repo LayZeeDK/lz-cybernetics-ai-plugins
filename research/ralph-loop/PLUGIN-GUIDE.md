@@ -259,7 +259,7 @@ This table maps Ralph patterns to their cybernetic roles, existing implementatio
 | Stop Hook | Comparator | Anthropic: same-session promise matching | Genuine context rotation + multi-layered external verification |
 | Backpressure | Negative feedback | ralph-orchestrator: tests + lint + typecheck gates | Adaptive damping based on feedback signal quality |
 | Guardrails | Variety attenuator / hysteresis | Cursor plugin: `guardrails.md` with manual entries | Autopoietic constraint generation from detected failure patterns |
-| Context rotation | Homeostasis / variety injection | Only bash loop and ralph-orchestrator do this | Task-based delegation: fresh 200K windows for work units; orchestrator stays lean |
+| Context rotation | Homeostasis / variety injection | Only bash loop and ralph-orchestrator do this | Task-based delegation: fresh 200K windows for work units; orchestrator focuses on dispatch logic and delegates implementation to Tasks; meta-analysis and escalation decisions remain in orchestrator context (architectural limitation -- orchestrator variety decreases over time even as workers maintain fresh variety) |
 | Gutter detection | Pathology sensor / System 3* audit | Cursor plugin: 3x-fail + file thrashing detection | Eigenform detection + automatic recovery + pattern classification |
 | Subagent orchestration | Variety amplification (Ashby's Law) | All: limited to model-specific patterns | Monitored variety with explicit Ashby tracking and threshold interventions |
 | AGENTS.md updates | Teachback / eigenform production | All: manual operational learnings | Automated operational learning extraction from iteration analysis |
@@ -311,7 +311,7 @@ See also the Algedonic Channel enhancement in [CYBERNETICS-ANALYSIS.md](./CYBERN
 The most architecturally significant concept -- implementing genuine context rotation within a Claude Code plugin:
 
 - **Token budget monitoring via hooks:** Track context utilization through tool call history size and response complexity. Tiered thresholds: healthy (<60%), warning (60-80%), critical (>80%).
-- **Automatic compaction triggers:** When approaching warning threshold, instruct Claude to externalize current state to files before context degrades. Compaction artifacts should include: end goal, approach, completed steps, current state, next steps.
+- **Automatic compaction triggers:** When approaching warning threshold, instruct Claude to externalize current state to files before context degrades. Compaction artifacts should include: end goal, approach, completed steps, current state, next steps. **Note:** A degraded orchestrator (>60% context) performing compaction produces biased summaries. Delegating compaction to a fresh-context Task reading raw iteration logs produces cleaner, less biased summaries. See the Task Spawning as Layer Implementation subsection for how this maps to the "attempt summarization as compaction" pattern.
 - **Session handoff with state preservation:** Use `.claude/*.local.md` files with YAML frontmatter for structured state that survives context boundaries.
 - **Primary mechanism -- Task-based context delegation:** Commands and skills instruct Claude to spawn Tasks with fresh 200K context windows for each work unit, keeping the orchestrator session lean.
 - **Deep nesting via `Bash(claude -p ...)`:** Task workers can invoke the Claude CLI to spawn sub-sessions with genuinely fresh context (new OS process per invocation), enabling multi-level delegation.
@@ -613,6 +613,46 @@ With Task spawning (see the Task-Based Context Rotation Architecture section bel
 - **Orchestrator-worker state contract:** The structured output formats that the early exploration prescribed per layer (Goal Interpretation / Success Criteria for outer; Attempt Pattern Summary / Strategy Adjustment for middle; Test Feedback / Error Analysis for inner) map naturally to the **state file schema** that the orchestrator writes and Task workers read. They are not agent output formats -- they are the contract between coordinator and workers.
 
 This reinterpretation does not add new plugin concepts. It connects the Per-Iteration Coordination Protocol (which sequences checks via hooks) to the Task-Based Context Rotation Architecture (which provides the fresh-context infrastructure), showing how the conceptual layers are implemented through both mechanisms working together: hooks for real-time mid-iteration steering, Task workers for fresh-context higher-order analysis.
+
+**Note:** The orchestrator session (not hooks) spawns analysis Tasks. Hooks provide real-time steering signals (block/allow decisions); the orchestrator reads these signals and decides whether to spawn fresh-context workers for deeper analysis. This two-tier model acknowledges that hooks are fast but shallow, while Task workers are fresh but carry 20K token overhead.
+
+### Hook vs Task Architectural Boundary
+
+Hooks (PreToolUse, PostToolUse, Stop) are Node.js scripts that execute outside the Claude conversation. They return JSON decisions (allow, block, with optional context) but **cannot spawn Tasks**. The Task tool is available only within a Claude conversation turn -- it requires the Claude agent to invoke it, which hooks cannot do.
+
+This architectural constraint means that meta-analysis capabilities -- escalation classification, pattern detection across iterations, learning level diagnosis -- must be implemented through one of two paths:
+
+- **(A) In orchestrator context:** The orchestrator session itself performs meta-analysis based on signals from hooks. This is the simplest path but acknowledges a fundamental limitation: the orchestrator accumulates context bias over time, meaning its meta-analysis quality degrades as it processes more iterations. The very context that gives it history also introduces noise.
+- **(B) In commands/skills that spawn analysis Tasks:** Commands or skills instruct Claude to spawn fresh-context Task workers for periodic deep analysis (e.g., "analyze the last 5 iteration logs for L-I stagnation patterns"). This requires restructuring the protocol so that meta-analysis is triggered by commands rather than embedded in hook logic.
+
+**Chosen architecture:** Option A for real-time steering (hooks provide fast, shallow signals like block/allow decisions and escalation level updates), Option B for periodic deep analysis (commands spawn fresh-context workers to analyze iteration history, revise guardrails, and diagnose learning level mismatches). This two-tier approach keeps hooks fast and stateless while reserving computationally expensive and bias-sensitive analysis for fresh-context workers.
+
+Cross-reference: [TASK-SPAWNING-GUIDE.md](../task-spawning/TASK-SPAWNING-GUIDE.md) Plugin Integration table for which plugin components can and cannot trigger Task spawning.
+
+### Orchestrator-Worker State Contract
+
+The orchestrator and Task workers communicate through a structured state contract. This skeleton defines the data flow in both directions -- what the orchestrator provides when spawning a worker, and what the worker returns upon completion.
+
+```yaml
+# Orchestrator -> Worker (via Task prompt)
+escalation_level: E-I | E-II | E-III | E-IV
+iteration_count: <number>
+last_failure_class: <string>
+state_file_path: <path to YAML state file>
+work_directive: <specific task instruction>
+
+# Worker -> Orchestrator (via Task result)
+status: success | failure | escalate
+summary: <concise description of outcome>
+files_changed: [<list of paths>]
+escalation_reason: <string, if status=escalate>
+```
+
+This is a skeleton contract -- a starting point for orchestrator-worker communication that implementations will refine based on specific plugin needs. The orchestrator embeds the relevant fields into the Task prompt (providing the worker with enough context to act without inheriting the orchestrator's accumulated context). The worker returns structured results that the orchestrator parses to update the state file and make coordination decisions (continue, escalate, rotate).
+
+The contract fields map to the Per-Iteration Coordination Protocol: `escalation_level` carries the Escalation Vocabulary state, `last_failure_class` informs the Learning Level Tracker, and `work_directive` encodes the specific work unit from the coordination decision flowchart. The worker's `status` and `escalation_reason` feed back into the post-iteration escalation update.
+
+For Task spawning mechanics (how to construct the Task prompt, set `subagent_type`, choose `model`, and handle results), see [TASK-SPAWNING-GUIDE.md](../task-spawning/TASK-SPAWNING-GUIDE.md).
 
 ## Task-Based Context Rotation Architecture
 

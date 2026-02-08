@@ -362,7 +362,20 @@ while :; do cat PROMPT.md | claude ; done
 
 > "The idea behind Ralph is an outer layer orchestrator, not a in a loop... your loop could actually have run the main prompt and then you could have another one which is like classify if X was done." -- [Ralph Wiggum Showdown](./sources/video-ralph-wiggum-showdown/)
 
-See [IMPLEMENTATION.md](./IMPLEMENTATION.md#loop-patterns) for detailed technical analysis of these patterns.
+### Task Spawning: Plugin-Native Fresh Context (2026)
+
+The Task tool's introduction represents a fourth architectural approach. Where earlier patterns relied on external bash loops (`while true; do claude -p ...; done`), Task spawning internalizes the fresh-context pattern within Claude Code itself:
+
+| Approach | Mechanism | Context Model | State Persistence |
+|----------|-----------|---------------|-------------------|
+| Manual restart | Human re-launches Claude | Full reset | Copy-paste |
+| Bash loop | `while true` + `claude -p` | Full reset per iteration | Files in CWD |
+| Plugin hooks | PreToolUse/PostToolUse/Stop | Shared (single context) | Hook state + files |
+| Task spawning | Task tool + fresh workers | Hybrid (orchestrator shared, workers fresh) | State files + Task results |
+
+The Task spawning approach combines the fresh-context benefits of the bash loop with the coordination capabilities of plugin hooks. An orchestrator maintains continuity and strategic direction while spawned workers each receive an uncontaminated context window -- addressing the compaction problem that Huntley and Horthy identified in the plugin approach during the Showdown. This is the cybernetic equivalent of adding parallel comparators to what was previously a serial feedback loop.
+
+See [IMPLEMENTATION.md](./IMPLEMENTATION.md#loop-patterns) for detailed technical analysis of these patterns and `research/task-spawning/TASK-SPAWNING-GUIDE.md` for the Task spawning implementation model.
 
 ## Cultural Impact
 

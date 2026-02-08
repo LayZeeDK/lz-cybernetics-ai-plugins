@@ -55,6 +55,23 @@ Most Ralph case studies have incomplete data. This document provides a framework
 | Context rotation count | Number of forced rotations per task | Token tracking | 0-3 for typical tasks |
 | Plan regeneration count | Number of plan rewrites per task | Session logs | 0-1 for typical tasks |
 
+### Task Spawning Metrics
+
+Task spawning introduces parallel execution that requires additional metrics beyond single-context Ralph loop tracking. See `research/task-spawning/TASK-SPAWNING-GUIDE.md` for the execution model.
+
+| Metric | Description | Target Range |
+|--------|-------------|-------------|
+| Worker Concurrency | Tasks per batch (practical limit ~7) | 3-5 for most workloads |
+| Batch Wall-Clock Time | Determined by slowest Task in batch | < 2x single-task time |
+| Cross-Worker Coordination Overhead | Tokens spent on state file reads/writes and result parsing | < 15% of total batch tokens |
+| Per-Worker Token Consumption | Individual worker context usage | 40-80% of 200K (80-160K) |
+| Aggregate Token Consumption | Sum of orchestrator + all worker tokens | Track against budget ceiling |
+| Task Overhead Ratio | Overhead tokens / useful work tokens per Task | < 0.25 (20K overhead / 80K+ useful) |
+| Result Truncation Rate | Fraction of worker results that exceed buffer limits | Target: 0% (use state files) |
+| Worker Failure Rate | Fraction of Tasks that return error/timeout | < 10% per batch |
+
+**Accounting note:** Total iteration cost with Task spawning is: `orchestrator_tokens + SUM(worker_tokens) + SUM(worker_overhead)`. The 3-4x token multiplier reported in practice means a 200K orchestrator context spawning 5 workers may consume ~1.1M total tokens per iteration.
+
 ## Benchmarking Methodology
 
 ### The Kustomark Approach

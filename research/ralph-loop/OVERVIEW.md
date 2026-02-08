@@ -167,6 +167,10 @@ Ralph exploits this by keeping each iteration short -- one task, one commit -- t
 
 Huntley budgets the context window explicitly: approximately 7% for specs, 7% for the current state of the world, 3% for the implementation plan, 10-15% for the base message and MCP tools, leaving the remainder for actual work. See [IMPLEMENTATION.md](./IMPLEMENTATION.md#context-window-budgeting) for details.
 
+### Task Spawning as Native Implementation
+
+Task spawning achieves stateless resampling natively within Claude Code, making Ralph's core insight -- fresh context combined with external state persistence -- available without external bash orchestration. The `Bash(while true)` loop remains the canonical pattern for understanding Ralph's architecture; the Task tool is the plugin-native equivalent that integrates with Claude Code's permission model, tool restrictions, and context management. Each Task worker is a fresh Ralph iteration with 200K tokens of uncontaminated context. See [research/task-spawning/TASK-SPAWNING-GUIDE.md](../task-spawning/TASK-SPAWNING-GUIDE.md) for the implementation model.
+
 ## The "Let Ralph Ralph" Philosophy
 
 Trust the process:
@@ -234,6 +238,8 @@ The technique has been validated in production contexts:
 - **Creative work requiring human judgment** -- design choices, UX decisions
 - **Cost-sensitive applications** -- loops can be expensive ($5-150+ per task depending on complexity)
 - **Tasks requiring long context horizon** -- some problems genuinely need the full context of a long session; Ralph's single-task-per-iteration model may not reach solutions that require deep, accumulated reasoning
+
+**Task Spawning Caveat:** Task spawning partially addresses the long-context limitation. While a single Ralph iteration is still bounded by 200K tokens, the orchestrator can maintain a high-level map of the problem space and delegate focused subtasks to fresh-context workers. This enables tackling problems that exceed a single context window, provided they can be decomposed into independently addressable sub-problems. The constraint shifts from "problem must fit in one context" to "problem must be decomposable into sub-problems that each fit in one context."
 
 ## Key Terminology
 

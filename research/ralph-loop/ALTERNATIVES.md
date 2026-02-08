@@ -39,6 +39,7 @@ This is the most important table in this document. Context clearing is what dist
 | **LangChain/DeepAgents** | Same session | `--ralph-iterations` count | Low | Graph-based |
 | **Kimi-cli** | Configurable | `loop_control` settings | Unknown (limited docs) | Configurable |
 | **Vercel AI SDK** | Same session with verification | `stopWhen` / `verifyCompletion` hooks | Medium | Programmatic verification |
+| **Task-Spawned Workers** | Per-task (200K each) | Full (fresh context per worker) | High | Explicit (state files), plugin-native |
 
 Implementations with "High" fidelity start a new process or context window each iteration, reading state from disk. Those with "Low" fidelity extend a single context window, which -- as Dex Horthy noted of the Anthropic plugin -- "misses the key point of ralph which is not 'run forever' but 'carve off small bits of work into independent context windows'" ([A Brief History of Ralph](./sources/blog-brief-history-of-ralph/)). See [HISTORY.md](./HISTORY.md) for the full chronology of these implementations.
 
@@ -228,6 +229,8 @@ A Claude Code plugin that implements a multi-agent orchestrator with fresh conte
 
 **Relationship to Ralph:** Complementary. GSD orchestrates the overall workflow (discuss, plan, execute, verify), while Ralph's iteration pattern could drive each execution phase. GSD's fresh-context-per-executor design is architecturally aligned with Ralph's fresh-context-per-iteration principle.
 
+**Proto-Task architecture:** GSD's checkpoint-and-resume pattern is a proto-Task architecture: each checkpoint creates a state snapshot, and resumption loads it into a fresh context. Task spawning formalizes this pattern with explicit orchestrator-worker contracts and concurrent execution. The key difference is that GSD operates sequentially (one context at a time) while Task spawning enables parallel workers. See `research/task-spawning/TASK-SPAWNING-GUIDE.md` for the Task spawning implementation model.
+
 ### claude-mem (make-plan / do)
 
 A Claude Code plugin combining observation/memory with plan-based orchestration.
@@ -242,6 +245,8 @@ A Claude Code plugin combining observation/memory with plan-based orchestration.
 **Key innovation:** The persistent plan artifact as a bridge between fresh-context subagents. The `/make-plan` command spawns a research subagent that produces a structured plan; the `/do` command spawns an execution subagent that reads and follows that plan. Each subagent gets fresh context, with the plan file serving as the state transfer mechanism -- directly analogous to Ralph's `IMPLEMENTATION_PLAN.md`.
 
 **Relationship to Ralph:** Complementary. claude-mem handles the phase transitions (research -> plan -> execute) with memory persistence, while Ralph's loop mechanism could drive repeated execution within each phase.
+
+**Proto-Task architecture:** claude-mem's persistent memory layer anticipates the state contract needed for Task spawning: observations stored in a database provide the external state that fresh-context workers can query. In a Task spawning architecture, claude-mem's search/retrieval MCP tools become the shared memory bus between orchestrator and workers, replacing ad-hoc state files with structured, queryable persistent memory.
 
 ### Comparison Table
 

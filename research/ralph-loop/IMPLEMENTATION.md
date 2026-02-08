@@ -171,6 +171,8 @@ Ralph's context rotation addresses what the Alibaba Cloud article calls "Context
 
 > "Each round of the loop can be seen as a brand new session, with the agent no longer reading states from bloated history records. The agent directly scans the current project structure and log files through file reading tools. This pattern shifts 'state management' from the LLM's memory (token sequence) to the disk (file system)." -- [ReAct to Ralph Loop](./sources/blog-react-to-ralph-loop/)
 
+**Task Spawning Extension:** These thresholds apply to the orchestrator session. Each Task worker starts at 0% utilization regardless of orchestrator state, effectively resetting the context window. The 40-60% 'smart zone' governs the orchestrator's dispatch decisions; worker contexts are fresh by design. This means the orchestrator can delegate work even when it is in the >80% danger zone, as long as it can still formulate a clear work directive. See `research/task-spawning/TASK-SPAWNING-GUIDE.md`, 'Ralph-Style Context Rotation via Tasks'.
+
 See [FAILURE-MODES.md](./FAILURE-MODES.md#context-related-failures) for detailed failure patterns around context rot and pollution. For Task-based context rotation within Claude Code plugins, see [TASK-SPAWNING-GUIDE.md](../task-spawning/TASK-SPAWNING-GUIDE.md#ralph-style-context-rotation-via-tasks).
 
 ## Subagent Orchestration
@@ -192,6 +194,8 @@ The main agent context acts as a **task scheduler**. Expensive work is delegated
 > "Use main agent/context as a scheduler. Don't allocate expensive work to main context; spawn subagents whenever possible instead." -- [Ralph Playbook](./sources/repo-how-to-ralph-wiggum/)
 
 > "Each subagent gets ~156kb that's garbage collected. Fan out to avoid polluting main context." -- [Ralph Playbook](./sources/repo-how-to-ralph-wiggum/)
+
+**Task Tool Constraints:** The aspirational subagent figures above describe LLM-managed delegation within a single context. When using the Task tool for true process isolation, practical limits apply: ~7 concurrent Tasks per batch, ~20K token overhead per Task, and a 3-4x total token multiplier. Group related files into fewer Tasks (e.g., 3-5 Tasks reading 10-15 files each) to amortize overhead. See `research/task-spawning/TASK-SPAWNING-GUIDE.md` for the full cost model.
 
 ### Subagent Response Structuring
 
