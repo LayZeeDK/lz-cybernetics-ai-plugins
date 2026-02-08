@@ -738,36 +738,40 @@ Every cybernetics concept documented in this analysis maps to at least one archi
 
 | Cybernetic Concept | Theorist | Enhancement(s) |
 |-------------------|----------|----------------|
-| Negative feedback / Feedback loops | Wiener | #1 Plugin Hooks, #3 Backpressure |
-| Stop Hook as comparator | (architectural) | #1 Plugin Hooks |
-| Backpressure | Huntley | #1 Plugin Hooks, #3 Backpressure |
-| Requisite Variety | Ashby | #2 Governor |
-| Damping / Speed Limit | Pocock | #2 Governor |
-| Homeostasis / Auto-Heal | (application) | #5 VSM Dashboard |
-| **Ultrastability** | **Ashby** | **#8 Ultrastable Iteration** |
-| **Black Box Methodology** | **Ashby** | **#6 Black Box Verification** |
-| **Good Regulator Theorem** | **Conant-Ashby** | **#9 Good Regulator Maintenance** |
-| **Channel Capacity** | **Shannon** | **#10 Channel Capacity Monitor** |
-| Observer Inclusion | Von Foerster | #4 Autopoietic Learning |
-| Autopoiesis | Maturana/Varela | #4 Autopoietic Learning |
-| Eigenforms | Von Foerster | #2 Governor, #4 Autopoietic Learning |
-| **Structural Determinism** | **Maturana** | **#15 Structural Context Engineering** |
-| **Ethical Imperative** | **Von Foerster** | **#7 Ethical Variety Monitor** |
-| VSM (Systems 1-5, 3*) | Beer | #5 VSM Dashboard |
-| **Algedonic Signals** | **Beer** | **#11 Algedonic Channel** |
-| POSIWID | Beer | #2 Governor |
-| **Redundancy of Potential Command** | **Beer** | **#12 Redundancy Audit** |
-| Teachback | Pask | #4 Autopoietic Learning |
+| Negative feedback / Feedback loops | Wiener | Feedback and Backpressure |
+| Stop Hook as comparator | (architectural) | Feedback and Backpressure |
+| Backpressure | Huntley | Feedback and Backpressure |
+| Requisite Variety | Ashby | Variety Management |
+| Damping / Speed Limit | Pocock | Variety Management |
+| Homeostasis / Auto-Heal | (application) | VSM Dashboard |
+| **Ultrastability** | **Ashby** | **Ultrastable Iteration** |
+| **Black Box Methodology** | **Ashby** | **Black Box Verification** |
+| **Good Regulator Theorem** | **Conant-Ashby** | **Good Regulator Maintenance** |
+| **Channel Capacity** | **Shannon** | **Channel Capacity Monitor** |
+| Observer Inclusion | Von Foerster | Autopoietic Learning |
+| Autopoiesis | Maturana/Varela | Autopoietic Learning |
+| Eigenforms | Von Foerster | Variety Management, Autopoietic Learning |
+| **Structural Determinism** | **Maturana** | **Structural Context Engineering** |
+| **Ethical Imperative** | **Von Foerster** | **Ethical Variety Monitor** |
+| VSM (Systems 1-5, 3*) | Beer | VSM Dashboard |
+| **Algedonic Signals** | **Beer** | **Algedonic Channel** |
+| POSIWID | Beer | Variety Management |
+| **Redundancy of Potential Command** | **Beer** | **Redundancy Audit** |
+| Teachback | Pask | Autopoietic Learning |
 | Entailment Mesh | Pask | (architectural principle) |
-| **Levels of Learning** | **Bateson** | **#13 Learning Level Tracker** |
-| **Double Bind** | **Bateson** | **#14 Double Bind Detector** |
-| Externalization Paradigm | (synthesis) | #1 Plugin Hooks, #6 Black Box |
-| Compaction / Variety Reduction | Ashby | #2 Governor, #10 Channel Capacity |
-| Entropy Acceleration | Pocock | #3 Backpressure, #7 Ethical Variety |
+| **Levels of Learning** | **Bateson** | **Learning Level Tracker** |
+| **Double Bind** | **Bateson** | **Double Bind Detector** |
+| Externalization Paradigm | (synthesis) | Feedback and Backpressure, Black Box Verification |
+| Compaction / Variety Reduction | Ashby | Variety Management, Channel Capacity Monitor |
+| Entropy Acceleration | Pocock | Feedback and Backpressure, Ethical Variety Monitor |
 
 Bold rows = 10 new concepts added in commit `921c3ed`.
 
-### 1. Ralph Patterns -> Claude Code Plugin Hooks
+### First-Order Enhancements
+
+Rooted in Wiener (1948), Ashby (1956), Conant-Ashby (1970), and Shannon (1948). These enhancements address control loops, stability mechanisms, regulatory models, and information channel management -- the foundational machinery of any feedback system.
+
+#### Feedback and Backpressure
 
 The following table maps Ralph's cybernetic mechanisms to concrete Claude Code plugin infrastructure:
 
@@ -779,7 +783,14 @@ The following table maps Ralph's cybernetic mechanisms to concrete Claude Code p
 | Context rotation (variety injection) | Session boundary management | Fresh context per slash command invocation |
 | Progress tracking (external memory) | State files in `.claude/` | Persistent markdown files that survive context boundaries |
 
-### 2. Governor Enhancement
+A plugin implementing Ralph's backpressure architecture:
+
+- **Upstream steering**: Ensure deterministic setup by validating that `AGENTS.md` contains required operational commands (test, lint, build)
+- **Downstream steering**: PostToolUse hooks that check tool output for build/test failures and inject corrective instructions
+- **Acceptance-driven gates**: Derive test requirements from specification files and verify they exist before allowing commits
+- **Non-deterministic gates**: LLM-as-judge evaluation for subjective criteria, with configurable pass thresholds
+
+#### Variety Management
 
 The existing `lz-cybernetics.governor` implements first-order cybernetics (observe -> compare -> correct). The Ralph analysis suggests enhancements:
 
@@ -788,55 +799,7 @@ The existing `lz-cybernetics.governor` implements first-order cybernetics (obser
 - **Eigenform detection** -- recognize when the agent is in a stable pattern (productive) vs a stable attractor (stuck)
 - **POSIWID analysis** -- monitor what the agent actually does (files changed, tools invoked) vs what it was asked to do, flagging divergence
 
-### 3. Backpressure Plugin
-
-A plugin implementing Ralph's backpressure architecture:
-
-- **Upstream steering**: Ensure deterministic setup by validating that `AGENTS.md` contains required operational commands (test, lint, build)
-- **Downstream steering**: PostToolUse hooks that check tool output for build/test failures and inject corrective instructions
-- **Acceptance-driven gates**: Derive test requirements from specification files and verify they exist before allowing commits
-- **Non-deterministic gates**: LLM-as-judge evaluation for subjective criteria, with configurable pass thresholds
-
-### 4. Autopoietic Learning Plugin
-
-A plugin that embodies second-order cybernetics by observing its own observation:
-
-- Detects repeated failure patterns across sessions
-- Automatically generates guardrails (eigenform production)
-- Self-modifies its constraints based on accumulated experience
-- Implements the "tune like a guitar" philosophy programmatically
-
-### 5. VSM Dashboard
-
-Visualize the coding session as a viable system:
-
-- System 1: Current task execution status
-- System 2: Task coordination state (`IMPLEMENTATION_PLAN.md` status)
-- System 3: Quality gate status (last test/lint/build results)
-- System 3*: Audit alerts (context utilization, gutter detection)
-- System 4: Environmental awareness (spec-vs-code gap analysis)
-- System 5: Goal alignment (JTBD completion percentage)
-
-### 6. Black Box Verification
-
-A plugin implementing Ashby's black box principle -- all control depends on observable environmental state, never on agent self-reports:
-
-- **Observable-only comparators**: All hooks check environmental state (git diff, test exit codes, file existence) rather than interpreting agent output text
-- **Claim-vs-evidence audit**: Compare what the agent says it did (in output text) against what observably changed (file system state), flagging discrepancies as potential hallucination
-- **Binary comparators preferred**: Stop Hook pattern (exact string match) over fuzzy interpretation of agent "intent" or "confidence"
-- **No reliance on chain-of-thought**: Treat thinking tokens as opaque black-box output, not as reliable internal state
-
-### 7. Ethical Variety Monitor
-
-A plugin embodying von Foerster's ethical imperative ("act always so as to increase the number of choices"):
-
-- **Variety tracking**: Monitor whether agent actions increase or decrease system variety over time
-- **Type safety trend**: Detect `any` type additions, type assertion increases, type system weakening
-- **Coupling metrics**: Track whether dependencies between modules are increasing; whether interfaces are narrowing or widening
-- **Feedback channel health**: Detect lint rule suppressions, test skips, verification channel disabling
-- **Trend alerting**: Warn when cumulative variety is decreasing even if all tests pass -- the system may be "passing into fragility"
-
-### 8. Ultrastable Iteration
+#### Ultrastable Iteration
 
 A plugin implementing Ashby's two-tier adaptive architecture -- fast homeostatic loop for normal iteration, slow structural loop triggered by repeated failure:
 
@@ -847,7 +810,7 @@ A plugin implementing Ashby's two-tier adaptive architecture -- fast homeostatic
 
 Maps to: [Ultrastability](#ultrastability) section. The fast loop is the bash iteration; the slow loop is structural adaptation that the human currently performs manually.
 
-### 9. Good Regulator Maintenance
+#### Good Regulator Maintenance
 
 A plugin implementing the Conant-Ashby theorem -- continuously verifying that the agent's model (plan, AGENTS.md, progress state) matches the system it regulates (actual codebase):
 
@@ -858,7 +821,7 @@ A plugin implementing the Conant-Ashby theorem -- continuously verifying that th
 
 Maps to: [The Good Regulator Theorem](#the-good-regulator-theorem) section. The theorem *proves* that stale models cause regulation failure; this plugin makes the proof actionable.
 
-### 10. Channel Capacity Monitor
+#### Channel Capacity Monitor
 
 A plugin implementing Shannon's information theory -- tracking context *quality* (signal-to-noise ratio) rather than just context *quantity* (token utilization percentage):
 
@@ -869,7 +832,65 @@ A plugin implementing Shannon's information theory -- tracking context *quality*
 
 Maps to: [Channel Capacity and the Context Window](#channel-capacity-and-the-context-window) section. Replaces the heuristic "40-60%" with a principled information-theoretic framework.
 
-### 11. Algedonic Channel
+### Second-Order Enhancements
+
+Rooted in von Foerster, Maturana, Varela, and Ashby's black box methodology. These enhancements address self-reference, self-modification, observability constraints, and the ethical dimension of system variety -- recognizing that the observer is part of the system.
+
+#### Autopoietic Learning
+
+A plugin that embodies second-order cybernetics by observing its own observation:
+
+- Detects repeated failure patterns across sessions
+- Automatically generates guardrails (eigenform production)
+- Self-modifies its constraints based on accumulated experience
+- Implements the "tune like a guitar" philosophy programmatically
+
+#### Black Box Verification
+
+A plugin implementing Ashby's black box principle -- all control depends on observable environmental state, never on agent self-reports:
+
+- **Observable-only comparators**: All hooks check environmental state (git diff, test exit codes, file existence) rather than interpreting agent output text
+- **Claim-vs-evidence audit**: Compare what the agent says it did (in output text) against what observably changed (file system state), flagging discrepancies as potential hallucination
+- **Binary comparators preferred**: Stop Hook pattern (exact string match) over fuzzy interpretation of agent "intent" or "confidence"
+- **No reliance on chain-of-thought**: Treat thinking tokens as opaque black-box output, not as reliable internal state
+
+#### Ethical Variety Monitor
+
+A plugin embodying von Foerster's ethical imperative ("act always so as to increase the number of choices"):
+
+- **Variety tracking**: Monitor whether agent actions increase or decrease system variety over time
+- **Type safety trend**: Detect `any` type additions, type assertion increases, type system weakening
+- **Coupling metrics**: Track whether dependencies between modules are increasing; whether interfaces are narrowing or widening
+- **Feedback channel health**: Detect lint rule suppressions, test skips, verification channel disabling
+- **Trend alerting**: Warn when cumulative variety is decreasing even if all tests pass -- the system may be "passing into fragility"
+
+#### Structural Context Engineering
+
+A plugin implementing Maturana's structural determinism -- treating context loading as structural configuration of the agent rather than information delivery:
+
+- **Loading order enforcement**: Define and enforce context loading order: identity first (specs, JTBD), constraints second (guardrails, AGENTS.md), state third (progress, plan), environment last (source code)
+- **Negative example warnings**: Detect guardrails phrased as "do NOT do X" and warn that this loads the prohibited pattern into the agent's structural repertoire; suggest "do Y instead" phrasing
+- **Structural reset verification**: After context rotation, verify the fresh context is loaded in the correct structural order to configure the agent appropriately
+- **Context-as-configuration audit**: Track which files are loaded and in what order; flag sessions where source code is loaded before specs (structural misconfiguration)
+
+Maps to: [Structural Determinism](#structural-determinism) section. Loading files into context *reconfigures the agent's behavioral repertoire*, not merely "informs" it; loading order determines which structural responses are available.
+
+### Management Cybernetics Enhancements
+
+Rooted in Stafford Beer's Viable System Model (1972, 1979). These enhancements address organizational viability -- system health dashboards, emergency bypass channels, and verification of feedback channel independence.
+
+#### VSM Dashboard
+
+Visualize the coding session as a viable system:
+
+- System 1: Current task execution status
+- System 2: Task coordination state (`IMPLEMENTATION_PLAN.md` status)
+- System 3: Quality gate status (last test/lint/build results)
+- System 3*: Audit alerts (context utilization, gutter detection)
+- System 4: Environmental awareness (spec-vs-code gap analysis)
+- System 5: Goal alignment (JTBD completion percentage)
+
+#### Algedonic Channel
 
 A plugin implementing Beer's emergency bypass -- severity-aware signals that eject from the loop rather than iterating on catastrophic failures:
 
@@ -880,7 +901,7 @@ A plugin implementing Beer's emergency bypass -- severity-aware signals that eje
 
 Maps to: [Algedonic Signals: The Emergency Bypass Channel](#algedonic-signals-the-emergency-bypass-channel) section. No current Ralph implementation has this channel; all feedback flows through normal iteration.
 
-### 12. Redundancy Audit
+#### Redundancy Audit
 
 A plugin implementing Beer's redundancy of potential command -- verifying that feedback channels are truly independent and that no single-point-of-failure blinds the system:
 
@@ -891,7 +912,11 @@ A plugin implementing Beer's redundancy of potential command -- verifying that f
 
 Maps to: [Redundancy of Potential Command](#redundancy-of-potential-command) section. Redundancy without independence is cybernetic theater -- five channels that share the same blind spot provide no more safety than one.
 
-### 13. Learning Level Tracker
+### Ecological Cybernetics Enhancements
+
+Rooted in Gregory Bateson's ecological approach (1956, 1972). These enhancements address learning pathology diagnosis -- detecting when the system is stuck at the wrong learning level, and when contradictory constraints create oscillation that no amount of iteration can resolve.
+
+#### Learning Level Tracker
 
 A plugin implementing Bateson's learning hierarchy -- classifying system behavior by learning level and prescribing the correct intervention type:
 
@@ -902,7 +927,7 @@ A plugin implementing Bateson's learning hierarchy -- classifying system behavio
 
 Maps to: [Levels of Learning](#levels-of-learning) section. Learning I cannot solve Learning II problems; this plugin detects the mismatch and prescribes the correct level of intervention.
 
-### 14. Double Bind Detector
+#### Double Bind Detector
 
 A plugin implementing Bateson's double bind theory -- analyzing the constraint space for logical contradictions that cause oscillation no amount of guardrails can fix:
 
@@ -912,17 +937,6 @@ A plugin implementing Bateson's double bind theory -- analyzing the constraint s
 - **Human-surfacing**: Present detected contradictions to the operator with the conflicting constraints and suggested resolution paths
 
 Maps to: [The Double Bind](#the-double-bind) section. Adding guardrails to a double-bind situation makes it worse; this plugin detects the condition so the correct treatment (constraint resolution, not more constraints) can be applied.
-
-### 15. Structural Context Engineering
-
-A plugin implementing Maturana's structural determinism -- treating context loading as structural configuration of the agent rather than information delivery:
-
-- **Loading order enforcement**: Define and enforce context loading order: identity first (specs, JTBD), constraints second (guardrails, AGENTS.md), state third (progress, plan), environment last (source code)
-- **Negative example warnings**: Detect guardrails phrased as "do NOT do X" and warn that this loads the prohibited pattern into the agent's structural repertoire; suggest "do Y instead" phrasing
-- **Structural reset verification**: After context rotation, verify the fresh context is loaded in the correct structural order to configure the agent appropriately
-- **Context-as-configuration audit**: Track which files are loaded and in what order; flag sessions where source code is loaded before specs (structural misconfiguration)
-
-Maps to: [Structural Determinism](#structural-determinism) section. Loading files into context *reconfigures the agent's behavioral repertoire*, not merely "informs" it; loading order determines which structural responses are available.
 
 ## Key Insights for Plugin Architecture
 
