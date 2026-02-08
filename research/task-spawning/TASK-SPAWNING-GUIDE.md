@@ -310,7 +310,7 @@ Each `claude -p` invocation is an independent OS process with:
 | Nesting | Blocked by design | Unlimited (with depth guards) |
 | Result handling | Returned to parent, may be truncated | stdout capture, full output |
 | Observability | Claude Code tracks progress | Must implement own logging |
-| Cost control | Inherits parent billing | `--max-budget-usd` per invocation |
+| Cost control | Inherits parent billing | Inherits parent auth; on subscription plans, consumes shared usage pool (depth limits and timeouts as safeguards) |
 | Tool access | All tools except Task | All tools (configurable via `--allowed-tools`) |
 | Permission model | Inherits parent permissions | Own permission mode or `--dangerously-skip-permissions` (sandbox only) |
 | Concurrency | Up to 7-10 parallel Tasks | Limited by OS process limits |
@@ -326,11 +326,13 @@ Each `claude -p` invocation is an independent OS process with:
 | Risk | Mitigation |
 |------|------------|
 | Infinite recursion | Depth counter via file or environment variable; hard limit per invocation |
-| Cost explosion | `--max-budget-usd` flag on every `claude -p` invocation |
+| Usage explosion | Depth limits and timeouts per invocation; each `claude -p` consumes subscription usage from the shared pool |
 | Loss of observability | `--output-format=stream-json` for structured output; log to files |
 | Permission bypass | `--dangerously-skip-permissions` should ONLY be used in sandboxed environments |
 | Silent failure | Capture exit codes and stderr; implement timeouts |
 | Output encoding | Ensure consistent encoding (UTF-8) across process boundaries |
+
+**Billing note:** On subscription plans (Team, Pro, Max), `claude -p` inherits the parent session's authentication and consumes usage from the same shared pool. No separate API credits are required. The `--max-budget-usd` flag is an API-billing concept for Console/API-key auth and is not meaningful on subscription plans.
 
 ### Community Precedent
 

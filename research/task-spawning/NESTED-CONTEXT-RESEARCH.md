@@ -27,10 +27,12 @@ $ claude -p "What is 2+2" --max-budget-usd 0.05 --no-session-persistence
 Error: Exceeded USD budget (0.05)
 ```
 
-The command **executed successfully** (budget error, not a recursion/permission block). This confirms:
+The command **executed** (the budget cap was hit, not a recursion/permission block). This confirms:
 - The `claude` binary is on PATH inside the Bash tool's environment
 - No guard prevents nested invocation
 - `claude -p` spawns an independent OS process with its own fresh context
+
+**Billing note:** `claude -p` inherits the parent session's authentication. On subscription plans (Team, Pro, Max), nested invocations consume the same shared usage pool as interactive sessions -- no separate API credits are required. The `--max-budget-usd` flag is an API-billing concept (for Console/API-key auth) and is not meaningful on subscription plans.
 
 ### Environment Variables Present But Non-Blocking
 
@@ -73,7 +75,7 @@ Relevant flags for nested invocation (from `claude --help` v2.1.37):
 | `-p` / `--print` | Non-interactive mode: print response and exit |
 | `--no-session-persistence` | Don't save session to disk (only with `--print`) |
 | `--dangerously-skip-permissions` | Bypass all permission prompts (sandbox only) |
-| `--max-budget-usd <n>` | Cap API spending per invocation |
+| `--max-budget-usd <n>` | Cap API spending per invocation (API-billing only; not meaningful on subscription plans) |
 | `--model <model>` | Select model (opus, sonnet, haiku) |
 | `--output-format <fmt>` | `text` (default), `json`, `stream-json` |
 | `--allowed-tools <list>` | Restrict available tools |
@@ -85,7 +87,7 @@ Relevant flags for nested invocation (from `claude --help` v2.1.37):
 | Risk | Mitigation |
 |------|------------|
 | Infinite recursion | Implement depth counter via file or env var; set hard limit per invocation |
-| Cost explosion | `--max-budget-usd` per invocation; document cost multiplier |
+| Usage explosion | Depth limits and timeouts per invocation; each `claude -p` consumes subscription usage from the shared pool |
 | Loss of observability | `--output-format=stream-json` for structured output; log to files |
 | Permission model bypass | `--dangerously-skip-permissions` should ONLY be used in sandboxes |
 | Silent failure | Capture exit codes and stderr; implement timeout |
@@ -94,8 +96,10 @@ Relevant flags for nested invocation (from `claude --help` v2.1.37):
 **Important caveats:**
 - This is NOT an officially supported pattern -- GitHub Issue #4182 calls recursive `claude -p` calls "unmaintainable hacks"
 - `--dangerously-skip-permissions` should NEVER be recommended outside sandboxed environments
-- All recursive examples must include depth limits and cost guards
-- `Bash(claude -p ...)` is NOT equivalent to Task tool nesting (different observability, cost model, permission model)
+- All recursive examples must include depth limits and timeouts
+- `Bash(claude -p ...)` is NOT equivalent to Task tool nesting (different observability, permission model)
+
+**Billing model:** On subscription plans (Team, Pro, Max), `claude -p` inherits the parent session's authentication and consumes usage from the same shared pool. No separate API credits are required. The `--max-budget-usd` flag is an API-billing concept for Console/API-key auth and is not meaningful on subscription plans. For subscription users, depth limits and timeouts are the primary cost safeguards.
 
 ## Architecture
 
@@ -110,7 +114,7 @@ Main Session (accumulates context)
 
 - **1 level**: Orchestrator -> Task Worker (standard; managed by Claude Code)
 - **2+ levels**: Orchestrator -> Task Worker -> `Bash(claude -p ...)` (unmanaged; requires own safeguards)
-- **Unlimited**: Each `claude -p` can invoke further `claude -p` (requires depth guards, cost caps, timeouts)
+- **Unlimited**: Each `claude -p` can invoke further `claude -p` (requires depth guards and timeouts)
 
 ## Comparison: Task Tool vs Bash(claude -p)
 
@@ -120,16 +124,16 @@ Main Session (accumulates context)
 | Nesting | Blocked by design | Unlimited (with depth guards) |
 | Result handling | Returned to parent, may be truncated | stdout capture, full output |
 | Observability | Claude Code tracks progress | Must implement own logging |
-| Cost control | Inherits parent billing | `--max-budget-usd` per invocation |
+| Cost control | Inherits parent billing | Inherits parent auth; on subscription plans, consumes shared usage pool (depth limits and timeouts as safeguards) |
 | Tool access | All tools except Task | All tools (configurable via `--allowed-tools`) |
 | Permission model | Inherits parent permissions | Own permission mode or `--dangerously-skip-permissions` (sandbox only) |
 | Concurrency | Up to 7-10 parallel Tasks | Limited by OS process limits |
 
 ## Experimental Verification
 
-Experimental tests are defined but not yet executed. See the [plugin guide plan](../../plans/add-ralph-plugin-guide.plan.md) Task 0.5.4 for the test suite (4 tests with `--max-budget-usd 0.50` each).
+Experimental tests were defined (see the [plugin guide plan](../../plans/add-ralph-plugin-guide.plan.md) Task 0.5.4) but not yet executed. `claude -p` inherits the parent session's authentication, so on subscription plans (Team, Pro, Max) it consumes the shared usage pool -- no separate API credits are required. Testing is feasible within the subscription allocation.
 
-**Status:** Pending execution.
+**Status:** Pending. Findings rest on documentation analysis, GitHub issue evidence, and community project validation. The core mechanism (`Bash(claude -p ...)` from within a Task worker) is well-documented in community projects like [claude-recursive-spawn](https://github.com/haasonsaas/claude-recursive-spawn) and acknowledged in GitHub Issue [#4182](https://github.com/anthropics/claude-code/issues/4182).
 
 ## Source References
 
