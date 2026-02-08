@@ -103,6 +103,61 @@ None of these implementations apply cybernetics theory explicitly:
 
 This is where our plugin innovates: applying cybernetic theory to make these capabilities explicit, measurable, and architecturally enforced.
 
+## The Helmsman: Plugin Identity
+
+**Plugin name:** `lz-cybernetics.helmsman`
+
+The word "cybernetics" comes from the Greek κυβερνήτης (*kybernetes*) -- "helmsman" or "steersman." Norbert Wiener chose this etymology deliberately when founding the field in 1948: a helmsman steers a ship by continuously observing the environment (waves, wind, heading), comparing against the desired course, and making corrective adjustments. The helmsman does not plan the entire voyage in advance and execute it blindly -- they steer iteratively, resetting their assessment with each wave.
+
+This is exactly what the Ralph Loop does: iterate, observe external state, correct course, repeat with fresh context. The plugin name makes this connection explicit.
+
+### RALPH: The Methodology
+
+The community knows the pattern as "Ralph" (after the Simpsons character, via Dex Horthy's original naming). Rather than abandoning this recognizable name, we reinterpret it as a principled engineering term:
+
+> **R**ecursive **A**daptive **L**oop with **P**rincipled **H**elmsmanship
+
+Each word earns its place through cybernetics theory:
+
+| Letter | Word | Cybernetic Grounding |
+|--------|------|---------------------|
+| **R** | Recursive | The feedback loop is self-referential: each iteration's output becomes the next iteration's input. This recursion is the structural basis of all cybernetic control -- Wiener's circular causality. |
+| **A** | Adaptive | Not merely repeating, but adapting. Ashby's ultrastability (two-tier adaptation), Bateson's learning levels (L-I correction vs L-II strategy change), and autopoietic self-modification all describe different kinds of adaptation the loop can exhibit. |
+| **L** | Loop | The negative feedback loop -- observe, compare, correct -- is the atomic unit of cybernetic control. Every capability in this guide (backpressure, damping, variety monitoring, context rotation) is a refinement of this fundamental loop structure. |
+| **P** | Principled | Grounded in cybernetics theory, not ad hoc heuristics. Each design decision traces to a specific theorist and principle: Ashby's requisite variety, Beer's viable systems, Bateson's learning hierarchy, Shannon's channel capacity, Maturana's structural determinism. |
+| **H** | Helmsmanship | The practice of steering by feedback -- κυβερνήτης in action. The helmsman metaphor captures what distinguishes this plugin from mechanical looping: situational awareness, adaptive response, and the judgment to know when to hold course versus when to change heading entirely. |
+
+### From Meme to Method
+
+The original Ralph Loop community adopted the name as self-deprecating humor -- "the dumbest thing that works." The RALPH backronym reframes it as "the most theoretically grounded thing that works." Both descriptions are simultaneously valid, which is itself a cybernetic observation: multiple valid descriptions of the same system coexist (a consequence of the observer-dependence that second-order cybernetics emphasizes).
+
+The shift from pop-culture meme to principled methodology is not cosmetic. It changes what questions practitioners ask:
+
+| Meme framing | Methodology framing |
+|---|---|
+| "Is it looping?" | "Is it adapting?" |
+| "How many iterations?" | "What learning level is the current failure?" |
+| "Is context full?" | "What is the signal-to-noise ratio?" |
+| "Did it finish?" | "Did the comparator confirm convergence?" |
+| "Make it loop longer" | "Inject variety or rotate context" |
+
+### Discoverability
+
+The plugin's `plugin.json` keywords should include both lineages for discoverability:
+
+```json
+{
+  "keywords": [
+    "cybernetics", "helmsman", "kybernetes",
+    "ralph-loop", "ralph", "ralph-wiggum",
+    "feedback-loop", "context-rotation", "backpressure",
+    "variety", "adaptation", "autonomous-coding"
+  ]
+}
+```
+
+Anyone searching for "ralph loop plugin" finds the keywords. Anyone reading the documentation finds the cybernetics lineage. The RALPH backronym bridges both audiences.
+
 ## Cybernetic Design Principles for Plugin Architecture
 
 Each principle below maps a cybernetics concept to a concrete plugin mechanism, grounded in the theory from [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md) and the failure modes documented in [FAILURE-MODES.md](./FAILURE-MODES.md).
