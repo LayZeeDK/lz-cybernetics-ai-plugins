@@ -255,10 +255,113 @@ The worker serves an Express HTTP API. Below is the full endpoint catalog.
 
 ### Worker not starting on Windows
 
-1. Check Task Manager for zombie `bun.exe` or `node.exe` processes
-2. Verify the port is not in use: `netstat -ano | findstr 37777`
-3. Check logs: `~/.claude-mem/logs/worker-YYYY-MM-DD.log`
-4. Delete stale PID file: `~/.claude-mem/worker.pid`
+When `worker:restart` or `worker:start` fails with "Process died during startup", follow this diagnostic path:
+
+**Step 1: Check if the port is in use**
+
+```bash
+netstat -ano | findstr 37777
+```
+
+If nothing is returned, the port is free -- check logs instead (Step 5). If a `LISTENING` entry appears, note the PID and continue.
+
+**Step 2: Identify the process holding the port**
+
+```powershell
+Get-Process -Id <PID> -ErrorAction SilentlyContinue
+```
+
+If the process exists, kill it (or stop the old worker first with `npm run worker:stop`). If the process does **not** exist, you have a zombie socket -- continue to Step 3.
+
+**Step 3: Kill child processes that inherited the socket handle**
+
+On Windows, child processes inherit socket handles by default. The dead worker's children keep the port occupied even after the worker exits. Find and kill them:
+
+```powershell
+# Find direct children of the dead worker PID
+Get-CimInstance Win32_Process |
+  Where-Object { $_.ParentProcessId -eq <DEAD_PID> } |
+  Select-Object ProcessId, Name, CommandLine
+
+# Common culprits: conhost.exe, chroma-mcp.exe, python.exe, uv.exe
+# Kill each child:
+Stop-Process -Id <CHILD_PID> -Force
+```
+
+After killing children, wait a few seconds and re-check `netstat -ano | findstr 37777`.
+
+**Step 4: Clean up half-closed connections with SetTcpEntry**
+
+If `CLOSE_WAIT` or `FIN_WAIT_2` connections remain (but no `LISTENING`), they can be cleared with the Windows IP Helper API. Run this from PowerShell (does not require admin for half-closed connections):
+
+```powershell
+Add-Type -TypeDefinition @"
+using System;
+using System.Net;
+using System.Runtime.InteropServices;
+public class TcpKiller {
+    [StructLayout(LayoutKind.Sequential)]
+    struct R { public int s, la, lp, ra, rp; }
+    [DllImport("iphlpapi.dll")] static extern int SetTcpEntry(ref R r);
+    public static int Close(string la, int lp, string ra, int rp) {
+        R r = new R();
+        r.s = 12; // MIB_TCP_STATE_DELETE_TCB
+        r.la = BitConverter.ToInt32(IPAddress.Parse(la).GetAddressBytes(), 0);
+        r.ra = BitConverter.ToInt32(IPAddress.Parse(ra).GetAddressBytes(), 0);
+        r.lp = IPAddress.HostToNetworkOrder((short)lp) & 0xFFFF;
+        r.rp = IPAddress.HostToNetworkOrder((short)rp) & 0xFFFF;
+        return SetTcpEntry(ref r);
+    }
+}
+"@
+
+Get-NetTCPConnection -LocalPort 37777 -ErrorAction SilentlyContinue |
+  Where-Object { $_.State -ne "Listen" } |
+  ForEach-Object {
+    $r = [TcpKiller]::Close($_.LocalAddress, $_.LocalPort, $_.RemoteAddress, $_.RemotePort)
+    Write-Host "$($_.State): $($_.LocalAddress):$($_.LocalPort) -> $($_.RemoteAddress):$($_.RemotePort) = $r"
+  }
+```
+
+A return value of `0` means success.
+
+**Step 5: Check worker logs**
+
+```bash
+# Today's log
+cat ~/.claude-mem/logs/worker-$(date +%Y-%m-%d).log
+
+# Error log (Windows only, created by Start-Process redirection)
+cat ~/.claude-mem/logs/worker-$(date +%Y-%m-%d).log.err
+```
+
+The wrapper log shows startup/shutdown events. Look for "Inner exited unexpectedly" which indicates the worker-service crashed during startup.
+
+**Step 6: Delete stale PID file**
+
+If the worker died without cleaning up:
+
+```bash
+rm ~/.claude-mem/worker.pid
+```
+
+**Step 7: Reboot (last resort)**
+
+If the `LISTENING` socket persists after killing all child processes and no live process holds the handle, this is a **Windows kernel TCP table leak**. The socket entry exists in the kernel with no backing process or handle. No userspace tool can reclaim it.
+
+Verify with [Sysinternals Handle](https://learn.microsoft.com/en-us/sysinternals/downloads/handle):
+
+```bash
+# Download and extract (ARM64 native build included)
+curl -sL -o Handle.zip https://download.sysinternals.com/files/Handle.zip
+unzip Handle.zip -d handle_tool
+
+# Check if any process holds a socket handle for the dead PID
+handle_tool/handle64a.exe -a -accepteula -p <DEAD_PID>
+# "No matching handles found" confirms a kernel leak
+```
+
+**Why `SetTcpEntry` cannot fix LISTEN sockets:** `SetTcpEntry` with `MIB_TCP_STATE_DELETE_TCB` works for established and half-closed connections (CLOSE_WAIT, FIN_WAIT_2) but returns error 317 for LISTEN sockets, even with full Administrator privileges and SeDebugPrivilege. `SO_REUSEADDR` is also blocked because the worker socket uses `SO_EXCLUSIVEADDRUSE`. A reboot is the only resolution.
 
 ### Orphan process cleanup
 
@@ -266,10 +369,12 @@ This repository includes a `SessionStart` hook (`.claude/hooks/cleanup-claude-me
 
 Orphaned processes older than 30 minutes matching `mcp-server.cjs`, `worker-service.cjs`, or `chroma-mcp` are terminated automatically at session start.
 
+**Limitation:** The hook kills orphaned *processes* via `taskkill`. It cannot reclaim zombie TCP sockets where the process has died but the kernel socket table entry persists (see Step 7 above).
+
 ### Manual health check
 
 ```bash
 curl -s http://127.0.0.1:37777/api/readiness
 ```
 
-If this returns an error or times out, the worker needs to be restarted.
+If this hangs or returns an error, the worker needs to be restarted. If it times out and `netstat` shows the port in use by a dead PID, follow the diagnostic steps above.
