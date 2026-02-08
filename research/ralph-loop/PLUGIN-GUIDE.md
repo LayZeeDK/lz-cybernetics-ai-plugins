@@ -147,7 +147,7 @@ In control theory, this is the sampling theorem applied to feedback systems. If 
 | Build broken | High damping -- block all new work until build restored |
 | Gutter detected (3x-fail, thrashing) | Maximum damping -- force context rotation |
 
-**Improvement over all implementations:** Current implementations cap iterations; cybernetics caps feedback rate. A damping-aware plugin would slow down when feedback quality degrades, not just when a counter reaches a threshold.
+**Improvement over all implementations:** Current implementations cap iterations; cybernetics caps feedback rate. A damping-aware plugin would slow down when feedback quality degrades, not just when a counter reaches a threshold. See also enhancement #8 Ultrastable Iteration in [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#8-ultrastable-iteration) for an Ashby-inspired approach where the system switches strategy rather than merely slowing down, and enhancement #14 Double Bind Detector in [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#14-double-bind-detector) for detecting contradictory constraints that cause oscillation no amount of damping can resolve.
 
 ### Principle 4: Enable Autopoiesis (Self-Modification)
 
@@ -224,6 +224,8 @@ A plugin implementing Ralph's backpressure architecture as cybernetic negative f
 - **Acceptance-driven gates:** Derive test requirements from specification files during the planning phase. Verify those tests exist before allowing commits. This connects System 5 (specifications) through System 3 (control) to System 1 (operations).
 - **Non-deterministic gates (System 3*):** LLM-as-judge evaluation for subjective criteria (creative quality, UX feel, code clarity). Binary pass/fail with configurable pass thresholds. Non-deterministic by nature -- the same work may pass or fail different audits -- but converges through iteration.
 
+See also enhancement #11 Algedonic Channel in [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#11-algedonic-channel) for an emergency bypass that escalates catastrophic failures (all tests failing, security vulnerabilities) past normal backpressure into immediate loop ejection, and enhancement #12 Redundancy Audit in [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#12-redundancy-audit) for ensuring that backpressure gates have overlapping coverage so no failure class goes undetected.
+
 ### Context Rotation Plugin
 
 The most architecturally significant concept -- implementing genuine context rotation within a Claude Code plugin:
@@ -251,7 +253,7 @@ Stop Hook (iteration lifecycle)
 - **2+ levels:** Orchestrator -> Task Worker -> `Bash(claude -p ...)` (unmanaged; requires own safeguards)
 - **Unlimited:** Each `claude -p` can invoke further `claude -p` (requires depth guards, timeouts)
 
-**Limitation:** The orchestrator (main session) still accumulates context. Task workers get fresh context, and can delegate further via `Bash(claude -p ...)` -- but the main session itself is never rotated. Only delegated work benefits from context freshness.
+**Limitation:** The orchestrator (main session) still accumulates context. Task workers get fresh context, and can delegate further via `Bash(claude -p ...)` -- but the main session itself is never rotated. Only delegated work benefits from context freshness. See also enhancement #10 Channel Capacity Monitor in [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#10-channel-capacity-monitor) for a principled SNR-based approach to tracking context quality degradation, and enhancement #15 Structural Context Engineering in [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#15-structural-context-engineering) for designing context payloads that match the agent's structural coupling constraints rather than merely staying within token budgets.
 
 **Cost tradeoff:** 20K token overhead per Task; each `Bash(claude -p ...)` incurs its own system prompt overhead (~20K tokens). Batch related work to amortize overhead -- 1 Task reading 10 files is better than 10 Tasks reading 1 file each.
 
@@ -264,7 +266,7 @@ A plugin that embodies second-order cybernetics -- observing its own observation
 - **Failure pattern storage:** Detect repeated failure patterns across sessions and store them in a structured format (e.g., `guardrails.md` with trigger, instruction, and origin metadata).
 - **Automatic constraint generation:** When the same failure pattern is detected N times, automatically generate a guardrail entry that future iterations can discover.
 - **Self-modifying constraints:** Periodically evaluate guardrail effectiveness by tracking whether the failure pattern recurs after the guardrail was added. Retire ineffective guardrails to prevent constraint accumulation.
-- **Cross-session learning:** Use persistent state files (`.claude/*.local.md`) to carry learned patterns across session boundaries. This implements the "tune like a guitar" philosophy programmatically.
+- **Cross-session learning:** Use persistent state files (`.claude/*.local.md`) to carry learned patterns across session boundaries. This implements the "tune like a guitar" philosophy programmatically. See also enhancement #13 Learning Level Tracker in [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#13-learning-level-tracker) for classifying guardrail learning by Bateson's hierarchy -- distinguishing mechanical rule-following (Learning I) from genuine adaptation of learning strategies (Learning II).
 
 ### VSM Dashboard (Viable System Model Visualization)
 
@@ -380,7 +382,7 @@ These insights synthesize the cybernetics analysis with the implementation surve
 
 6. **Fresh context equals variety injection.** Context rotation restores requisite variety. Plugins should detect context degradation and trigger rotation rather than allowing the agent to continue in the "dumb zone." Task-based delegation provides this mechanism from within a plugin session. See [TASK-SPAWNING-GUIDE.md](../task-spawning/TASK-SPAWNING-GUIDE.md#ralph-style-context-rotation-via-tasks).
 
-7. **The disposable plan.** Models of the system should be cheap to regenerate. A plugin that makes it easy to regenerate the implementation plan from specs has more cybernetic value than a plugin that tries to keep a stale plan alive. Regeneration cost is one planning loop -- cheap compared to the agent going in circles. See [FAILURE-MODES.md](./FAILURE-MODES.md#plan-rigidity).
+7. **The disposable plan.** Models of the system should be cheap to regenerate. A plugin that makes it easy to regenerate the implementation plan from specs has more cybernetic value than a plugin that tries to keep a stale plan alive. Regeneration cost is one planning loop -- cheap compared to the agent going in circles. See [FAILURE-MODES.md](./FAILURE-MODES.md#plan-rigidity). See also enhancement #9 Good Regulator Maintenance in [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#9-good-regulator-maintenance) for a principled approach grounded in the Conant-Ashby theorem: every good regulator must be a model of its system, so stale plans provably degrade regulation quality.
 
 8. **POSIWID reveals truth.** Monitor what the system actually does, not what it says it's doing. A System 3* audit function that tracks actual behavior provides the transparency that most agent systems lack entirely. See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#posiwid).
 

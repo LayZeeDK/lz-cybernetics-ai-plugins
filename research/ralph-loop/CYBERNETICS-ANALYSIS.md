@@ -732,6 +732,41 @@ Approach A fails -> Try B -> B fails -> Try A -> A fails -> ...
 
 The cybernetics analysis reveals specific architectural patterns that map directly to Claude Code plugin mechanisms. For the full design guide that synthesizes these implications into plugin architecture concepts, see [PLUGIN-GUIDE.md](./PLUGIN-GUIDE.md).
 
+### Concept-to-Enhancement Map
+
+Every cybernetics concept documented in this analysis maps to at least one architecturally significant enhancement:
+
+| Cybernetic Concept | Theorist | Enhancement(s) |
+|-------------------|----------|----------------|
+| Negative feedback / Feedback loops | Wiener | #1 Plugin Hooks, #3 Backpressure |
+| Stop Hook as comparator | (architectural) | #1 Plugin Hooks |
+| Backpressure | Huntley | #1 Plugin Hooks, #3 Backpressure |
+| Requisite Variety | Ashby | #2 Governor |
+| Damping / Speed Limit | Pocock | #2 Governor |
+| Homeostasis / Auto-Heal | (application) | #5 VSM Dashboard |
+| **Ultrastability** | **Ashby** | **#8 Ultrastable Iteration** |
+| **Black Box Methodology** | **Ashby** | **#6 Black Box Verification** |
+| **Good Regulator Theorem** | **Conant-Ashby** | **#9 Good Regulator Maintenance** |
+| **Channel Capacity** | **Shannon** | **#10 Channel Capacity Monitor** |
+| Observer Inclusion | Von Foerster | #4 Autopoietic Learning |
+| Autopoiesis | Maturana/Varela | #4 Autopoietic Learning |
+| Eigenforms | Von Foerster | #2 Governor, #4 Autopoietic Learning |
+| **Structural Determinism** | **Maturana** | **#15 Structural Context Engineering** |
+| **Ethical Imperative** | **Von Foerster** | **#7 Ethical Variety Monitor** |
+| VSM (Systems 1-5, 3*) | Beer | #5 VSM Dashboard |
+| **Algedonic Signals** | **Beer** | **#11 Algedonic Channel** |
+| POSIWID | Beer | #2 Governor |
+| **Redundancy of Potential Command** | **Beer** | **#12 Redundancy Audit** |
+| Teachback | Pask | #4 Autopoietic Learning |
+| Entailment Mesh | Pask | (architectural principle) |
+| **Levels of Learning** | **Bateson** | **#13 Learning Level Tracker** |
+| **Double Bind** | **Bateson** | **#14 Double Bind Detector** |
+| Externalization Paradigm | (synthesis) | #1 Plugin Hooks, #6 Black Box |
+| Compaction / Variety Reduction | Ashby | #2 Governor, #10 Channel Capacity |
+| Entropy Acceleration | Pocock | #3 Backpressure, #7 Ethical Variety |
+
+Bold rows = 10 new concepts added in commit `921c3ed`.
+
 ### 1. Ralph Patterns -> Claude Code Plugin Hooks
 
 The following table maps Ralph's cybernetic mechanisms to concrete Claude Code plugin infrastructure:
@@ -801,6 +836,94 @@ A plugin embodying von Foerster's ethical imperative ("act always so as to incre
 - **Feedback channel health**: Detect lint rule suppressions, test skips, verification channel disabling
 - **Trend alerting**: Warn when cumulative variety is decreasing even if all tests pass -- the system may be "passing into fragility"
 
+### 8. Ultrastable Iteration
+
+A plugin implementing Ashby's two-tier adaptive architecture -- fast homeostatic loop for normal iteration, slow structural loop triggered by repeated failure:
+
+- **Limit cycle detection**: Track error signatures across iterations; when the same error class recurs 3+ times, classify as homeostatic failure
+- **Structural change triggers**: Auto-regenerate implementation plan, rotate prompt strategy, or escalate to human with diagnostic
+- **Step-function threshold**: Configurable trigger for switching from "adjust parameters" (normal iteration) to "change structure" (plan regeneration, guardrail addition)
+- **Escalation with context**: When escalating, include the detected pattern, failed approaches, and suggested structural changes
+
+Maps to: [Ultrastability](#ultrastability) section. The fast loop is the bash iteration; the slow loop is structural adaptation that the human currently performs manually.
+
+### 9. Good Regulator Maintenance
+
+A plugin implementing the Conant-Ashby theorem -- continuously verifying that the agent's model (plan, AGENTS.md, progress state) matches the system it regulates (actual codebase):
+
+- **Plan-reality divergence detection**: After each iteration, compare `IMPLEMENTATION_PLAN.md` assertions against actual file state (do files listed exist? are "completed" tasks reflected in code?)
+- **Divergence scoring**: Compute a model-accuracy metric; trigger plan regeneration when score drops below threshold
+- **Operational guide validation**: Verify that `AGENTS.md` commands (build, test, lint) actually work against current project state
+- **Cheap regeneration over expensive repair**: When model divergence is high, regenerate the entire plan (one planning iteration) rather than patching incrementally
+
+Maps to: [The Good Regulator Theorem](#the-good-regulator-theorem) section. The theorem *proves* that stale models cause regulation failure; this plugin makes the proof actionable.
+
+### 10. Channel Capacity Monitor
+
+A plugin implementing Shannon's information theory -- tracking context *quality* (signal-to-noise ratio) rather than just context *quantity* (token utilization percentage):
+
+- **Content classification**: Categorize context content as signal (specs, relevant code, progress state) or noise (error logs, failed-attempt residue, stale information, irrelevant code)
+- **SNR-based rotation trigger**: Trigger context rotation when signal-to-noise ratio drops below threshold, regardless of utilization percentage
+- **Compaction risk assessment**: Warn when compaction would compress below critical rate (risk of losing essential signal along with noise)
+- **Quality-aware utilization**: Distinguish "50% utilized, clean context" (healthy) from "50% utilized, half noise" (degraded) -- same percentage, different system health
+
+Maps to: [Channel Capacity and the Context Window](#channel-capacity-and-the-context-window) section. Replaces the heuristic "40-60%" with a principled information-theoretic framework.
+
+### 11. Algedonic Channel
+
+A plugin implementing Beer's emergency bypass -- severity-aware signals that eject from the loop rather than iterating on catastrophic failures:
+
+- **Algedonic condition detection**: Monitor for existential threats: all tests failing (catastrophic regression), security vulnerabilities exposed, token burn rate exceeding budget, identical errors across N consecutive iterations
+- **Bypass vs backpressure**: Distinguish normal backpressure ("try again, tests failed") from algedonic signals ("stop trying, escalate to human"). Different mechanisms, different timescales
+- **Automatic halt and diagnostic**: When algedonic condition detected, halt the loop, preserve state for diagnosis, and alert the human with the detected condition and suggested recovery
+- **Configurable severity thresholds**: Let operators define what constitutes "pain" for their project (e.g., >$X token spend, >N iterations without progress, specific error patterns)
+
+Maps to: [Algedonic Signals: The Emergency Bypass Channel](#algedonic-signals-the-emergency-bypass-channel) section. No current Ralph implementation has this channel; all feedback flows through normal iteration.
+
+### 12. Redundancy Audit
+
+A plugin implementing Beer's redundancy of potential command -- verifying that feedback channels are truly independent and that no single-point-of-failure blinds the system:
+
+- **Channel independence analysis**: Audit backpressure layers (types, tests, lint, build) for shared blind spots -- do all channels derive from the same specification?
+- **Correlated failure detection**: Identify when a single root cause (e.g., a specification error) could pass through all verification channels undetected
+- **Spec-independent channel**: Verify at least one feedback channel evaluates from first principles (architectural fitness, behavioral smoke tests) rather than spec-derived requirements
+- **Coverage gap reporting**: Surface areas where no backpressure channel provides feedback (e.g., accessibility, error handling paths, edge cases)
+
+Maps to: [Redundancy of Potential Command](#redundancy-of-potential-command) section. Redundancy without independence is cybernetic theater -- five channels that share the same blind spot provide no more safety than one.
+
+### 13. Learning Level Tracker
+
+A plugin implementing Bateson's learning hierarchy -- classifying system behavior by learning level and prescribing the correct intervention type:
+
+- **Level classification**: Track whether the system is operating at L-I (iterative error correction within fixed strategy), L-II (strategy repertoire change via guardrails/spec revision), or L-III (meta-level restructuring)
+- **L-I stagnation detection**: When the same failure *class* (not specific error) recurs across iterations, diagnose as L-I problem requiring L-II intervention
+- **L-II event tracking**: Log guardrail additions, spec revisions, prompt restructuring as Learning II events; measure their effectiveness across subsequent iterations
+- **Intervention prescription**: When L-I stagnation detected, suggest specific L-II actions (add guardrail, revise spec, restructure prompt) rather than allowing continued futile iteration
+
+Maps to: [Levels of Learning](#levels-of-learning) section. Learning I cannot solve Learning II problems; this plugin detects the mismatch and prescribes the correct level of intervention.
+
+### 14. Double Bind Detector
+
+A plugin implementing Bateson's double bind theory -- analyzing the constraint space for logical contradictions that cause oscillation no amount of guardrails can fix:
+
+- **Constraint extraction**: Parse specs, guardrails, and `AGENTS.md` for imperatives (must/must-not/should/should-not)
+- **Contradiction detection**: Check for mutual exclusivity between constraints (e.g., "implement feature X" + "don't modify files outside scope" when X requires shared utility changes)
+- **Differential diagnosis**: When oscillation is detected, distinguish amnesiac oscillation (agent forgets failed approaches -- needs hysteresis) from double-bind oscillation (constraints contradict -- needs resolution)
+- **Human-surfacing**: Present detected contradictions to the operator with the conflicting constraints and suggested resolution paths
+
+Maps to: [The Double Bind](#the-double-bind) section. Adding guardrails to a double-bind situation makes it worse; this plugin detects the condition so the correct treatment (constraint resolution, not more constraints) can be applied.
+
+### 15. Structural Context Engineering
+
+A plugin implementing Maturana's structural determinism -- treating context loading as structural configuration of the agent rather than information delivery:
+
+- **Loading order enforcement**: Define and enforce context loading order: identity first (specs, JTBD), constraints second (guardrails, AGENTS.md), state third (progress, plan), environment last (source code)
+- **Negative example warnings**: Detect guardrails phrased as "do NOT do X" and warn that this loads the prohibited pattern into the agent's structural repertoire; suggest "do Y instead" phrasing
+- **Structural reset verification**: After context rotation, verify the fresh context is loaded in the correct structural order to configure the agent appropriately
+- **Context-as-configuration audit**: Track which files are loaded and in what order; flag sessions where source code is loaded before specs (structural misconfiguration)
+
+Maps to: [Structural Determinism](#structural-determinism) section. Loading files into context *reconfigures the agent's behavioral repertoire*, not merely "informs" it; loading order determines which structural responses are available.
+
 ## Key Insights for Plugin Architecture
 
 1. **Negative feedback is essential:** Without verification loops, agents drift. Every plugin that enables autonomous operation MUST include a comparator mechanism. The Stop Hook pattern -- external, binary, non-negotiable -- is the gold standard.
@@ -830,6 +953,16 @@ A plugin embodying von Foerster's ethical imperative ("act always so as to incre
 13. **Learning levels determine intervention type:** Bateson's hierarchy predicts that Learning I (iterative error correction) cannot solve Learning II problems (inadequate strategy set). When the same failure pattern recurs, the intervention must target the strategy set (add guardrails, revise specs) rather than the specific error. A system that tracks which learning level is active can prescribe the correct intervention.
 
 14. **The Good Regulator demands model accuracy:** The Conant-Ashby theorem proves that regulation quality is bounded by model accuracy. Stale plans, inaccurate `AGENTS.md`, and outdated progress files are degraded models that degrade every iteration. Regeneration is cheaper than repair -- the disposable plan is a corollary of the theorem, not merely a pragmatic convenience.
+
+15. **Ultrastability requires two loops:** When homeostatic adjustment fails (limit cycle detected), the system must change its own feedback structure, not just its parameters. The fast loop adjusts code; the slow loop changes guardrails, plans, and prompt strategy. A system with only the fast loop eventually gets stuck in a limit cycle it cannot escape.
+
+16. **Track signal quality, not just quantity:** Shannon's channel capacity theorem predicts that context *quality* (signal-to-noise ratio) matters more than context *size* (utilization percentage). A 30% utilized context full of error logs is more degraded than a 70% context with clean state. Trigger rotation on SNR, not token count.
+
+17. **Algedonic signals bypass normal iteration:** Some failures are too severe for "try again." Catastrophic regression, security vulnerabilities, and runaway cost require ejection from the loop, not another iteration. Backpressure corrects within the loop; algedonic signals eject from it.
+
+18. **Redundancy without independence is theater:** Multiple feedback channels that share the same blind spot provide false confidence. If all verification derives from the same specification, a spec error passes through every channel. At least one channel must evaluate from first principles, independent of the spec.
+
+19. **Context is structure, not information:** Maturana's structural determinism means loading files into context *reconfigures the agent's behavioral repertoire*, not merely "informs" it. Loading order matters -- specs before code produces a different agent than code before specs. Negative examples ("don't do X") activate the prohibited pattern. Fresh context is structural reset, not memory wipe.
 
 ## Sources
 
