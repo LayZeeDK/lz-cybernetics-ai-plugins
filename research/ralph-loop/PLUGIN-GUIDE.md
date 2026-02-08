@@ -91,6 +91,15 @@ None of these implementations apply cybernetics theory explicitly:
 | **Autopoiesis (self-modifying constraints)** | No | Limited (memory) | No | Automatic guardrail generation from failure patterns |
 | **Context rotation** | No (single session) | Yes (CLI process) | Per-task | Task-based delegation with fresh 200K windows |
 | **External comparator** | Partial (promise match) | Yes (tests/lint/typecheck) | No | Objective verification + LLM-as-judge for subjective criteria |
+| **Ultrastable adaptation (Ashby)** | No | No | No | Detect limit cycles; trigger structural change (plan regeneration, prompt rotation) rather than more same-level iteration |
+| **Black box verification (Ashby)** | No | No | No | All comparators observe environmental state (git diff, exit codes), never agent self-reports |
+| **Good regulator maintenance (Conant-Ashby)** | No | No | No | Detect plan-reality divergence; trigger model regeneration when stale plans degrade regulation |
+| **Channel capacity / SNR (Shannon)** | No | No | No | Track context signal-to-noise ratio; trigger rotation on SNR degradation, not just token count |
+| **Ethical variety monitoring (Von Foerster)** | No | No | No | Track whether agent actions increase or decrease future choices; alert on variety decline even when tests pass |
+| **Algedonic signals (Beer)** | No | No | No | Emergency bypass: eject from loop on catastrophic failure rather than iterating on existential threats |
+| **Redundancy of potential command (Beer)** | Partial (tests only) | Partial (tests + lint + typecheck) | No | Verify feedback channel independence; detect correlated failures from shared specification blind spots |
+| **Learning level diagnosis (Bateson)** | No | No | No | Classify iterations as L-I/L-II/L-III; detect L-I stagnation requiring L-II intervention |
+| **Double bind detection (Bateson)** | No | No | No | Analyze constraint space for contradictions causing oscillation guardrails cannot fix |
 
 This is where our plugin innovates: applying cybernetic theory to make these capabilities explicit, measurable, and architecturally enforced.
 
@@ -159,7 +168,7 @@ The Cursor implementation's `guardrails.md` is a concrete eigenform generator: e
 
 **Plugin implication:** A plugin that detects repeated failure patterns, automatically generates guardrails, and self-modifies its constraints based on accumulated experience implements second-order cybernetics -- observing its own observation. This is beyond what any current implementation does.
 
-**Improvement over all implementations:** No existing implementation has self-modifying constraints. They have persistent memory (ralph-orchestrator) and guardrail files (Cursor plugin), but the constraint generation is manual. An autopoietic plugin would close the loop: detect pattern, generate guardrail, load guardrail in future iterations, verify guardrail effectiveness, retire ineffective guardrails.
+**Improvement over all implementations:** No existing implementation has self-modifying constraints. They have persistent memory (ralph-orchestrator) and guardrail files (Cursor plugin), but the constraint generation is manual. An autopoietic plugin would close the loop: detect pattern, generate guardrail, load guardrail in future iterations, verify guardrail effectiveness, retire ineffective guardrails. See also the Learning Level Tracker enhancement in [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#learning-level-tracker) for classifying this self-modification by Bateson's learning hierarchy -- the autopoietic constraint generation described here is a Learning II process (changing the strategy repertoire), distinct from the Learning I iteration it corrects.
 
 ### Principle 5: Fresh Context via Task Spawning
 
@@ -199,8 +208,13 @@ This table maps Ralph patterns to their cybernetic roles, existing implementatio
 | Gutter detection | Pathology sensor / System 3* audit | Cursor plugin: 3x-fail + file thrashing detection | Eigenform detection + automatic recovery + pattern classification |
 | Subagent orchestration | Variety amplification (Ashby's Law) | All: limited to model-specific patterns | Monitored variety with explicit Ashby tracking and threshold interventions |
 | AGENTS.md updates | Teachback / eigenform production | All: manual operational learnings | Automated operational learning extraction from iteration analysis |
+| Plan regeneration | Good regulator maintenance (Conant-Ashby) | All: manual plan updates; Anthropic: disposable plan ethos | Good Regulator Maintenance: detect plan-reality divergence, auto-regenerate when model accuracy drops |
+| Limit cycle / repeated failure | Ultrastable structural change (Ashby) | Cursor plugin: 3x-fail gutter detection (stops, doesn't restructure) | Ultrastable Iteration: detect limit cycles, trigger structural change (plan regen, prompt rotation, escalation) |
+| Agent self-assessment | Black box methodology (Ashby) | All: trust agent's "done" assessment to varying degrees | Black Box Verification: observable-only comparators, claim-vs-evidence audit, no reliance on self-reports |
+| Learning level mismatch | Learning pathology sensor (Bateson L-I/L-II) | None -- all treat iteration failure as same-level problem | Learning Level Tracker: classify failure recurrence as L-I stagnation, prescribe L-II intervention |
+| Constraint contradiction | Double bind detector (Bateson 1956) | None -- all add more constraints to oscillation | Double Bind Detector: analyze constraint space, distinguish amnesiac from double-bind oscillation |
 
-Sources: [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md) for cybernetic roles, [ALTERNATIVES.md](./ALTERNATIVES.md) for implementation comparison, [FAILURE-MODES.md](./FAILURE-MODES.md) for gutter detection patterns.
+Sources: [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md) for cybernetic roles (first-order, second-order, management, ecological), [ALTERNATIVES.md](./ALTERNATIVES.md) for implementation comparison, [FAILURE-MODES.md](./FAILURE-MODES.md) for gutter detection patterns.
 
 ## Plugin Architecture Concepts
 
@@ -214,6 +228,17 @@ The existing governor plugin implements PreToolUse and PostToolUse hooks with sc
 - **Eigenform detection:** Recognize when the agent is in a stable productive pattern (eigenform) vs a stable but unproductive attractor (stuck). Productive patterns: consistent test-pass-commit cycles, focused file edits. Stuck patterns: repeated identical tool calls, edit-revert cycles, growing diff with no test improvement.
 - **Adaptive damping:** Adjust the feedback intervention rate based on convergence signals. When the agent is converging (tests improving, lint errors decreasing), reduce intervention frequency. When diverging (regression detected), increase it. This prevents the governor from becoming noise during productive work.
 - **Variety monitoring:** Track effective context utilization as a proxy for controller variety. Warn at 60% utilization, escalate at 80%, force rotation beyond 80%. This operationalizes Ashby's Law as a runtime measurement.
+
+### Black Box Verification
+
+A plugin implementing Ashby's black box methodology (1956) -- all control depends on observable environmental state, never on agent self-reports. The LLM is the definitive black box: its internal representations are unobservable during inference, and chain-of-thought output is itself a generated output, not a measurement of internals.
+
+- **Observable-only comparators:** All hooks check environmental state (git diff, test exit codes, file existence) rather than interpreting agent output text. The Stop Hook's binary string match is the purest black box design: it observes only output, makes no assumptions about internal state.
+- **Claim-vs-evidence audit:** Compare what the agent says it did (in output text) against what observably changed (file system state, git diff), flagging discrepancies as potential hallucination.
+- **Binary comparators preferred:** Stop Hook pattern (exact string match) over fuzzy interpretation of agent "intent" or "confidence."
+- **No reliance on chain-of-thought:** Treat thinking tokens as opaque black-box output, not as reliable internal state. Any control architecture that depends on the agent's self-reported "understanding" or "confidence" is cybernetically unsound.
+
+See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#black-box-verification) for the full enhancement specification and [The Black Box Methodology](./CYBERNETICS-ANALYSIS.md#the-black-box-methodology) for the underlying theory.
 
 ### Backpressure Plugin
 
@@ -267,6 +292,40 @@ A plugin that embodies second-order cybernetics -- observing its own observation
 - **Automatic constraint generation:** When the same failure pattern is detected N times, automatically generate a guardrail entry that future iterations can discover.
 - **Self-modifying constraints:** Periodically evaluate guardrail effectiveness by tracking whether the failure pattern recurs after the guardrail was added. Retire ineffective guardrails to prevent constraint accumulation.
 - **Cross-session learning:** Use persistent state files (`.claude/*.local.md`) to carry learned patterns across session boundaries. This implements the "tune like a guitar" philosophy programmatically. See also the Learning Level Tracker enhancement in [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#learning-level-tracker) for classifying guardrail learning by Bateson's hierarchy -- distinguishing mechanical rule-following (Learning I) from genuine adaptation of learning strategies (Learning II).
+
+### Ethical Variety Monitor
+
+A plugin embodying von Foerster's ethical imperative (1973): "Act always so as to increase the number of choices." This evaluates agent actions beyond functional correctness -- an action that passes all tests but reduces future options is a net negative for system viability.
+
+- **Variety tracking:** Monitor whether agent actions increase or decrease system variety over time. Tests (safety net for future changes), clear interfaces (composition possibilities), and deleted dead code (reduced confusion) increase variety. Hard-coded values, tight coupling, and suppressed lint rules decrease it.
+- **Type safety trend:** Detect `any` type additions, type assertion increases, type system weakening -- each reduces the type checker's ability to catch future errors.
+- **Coupling metrics:** Track whether dependencies between modules are increasing or decreasing; whether interfaces are narrowing (fewer choices) or widening (more choices).
+- **Feedback channel health:** Detect lint rule suppressions, test skips, verification channel disabling -- each reduces a feedback channel, decreasing choices for all subsequent iterations.
+- **Trend alerting:** Warn when cumulative variety is decreasing even if all tests pass -- the system may be "passing into fragility."
+
+See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#ethical-variety-monitor) for the full enhancement specification and [The Ethical Imperative](./CYBERNETICS-ANALYSIS.md#the-ethical-imperative) for the underlying theory.
+
+### Learning Level Tracker
+
+A plugin implementing Bateson's learning hierarchy (1972) -- classifying system behavior by learning level and prescribing the correct intervention type. The critical insight is that **Learning I cannot solve Learning II problems**: when the same failure *class* recurs across iterations, more iterations at the same level are futile.
+
+- **Level classification:** Track whether the system is operating at L-I (iterative error correction within a fixed strategy), L-II (strategy repertoire change via guardrails/spec revision), or L-III (meta-level restructuring of the learning process itself).
+- **L-I stagnation detection:** When the same failure *class* (not the same specific error) recurs across iterations, diagnose as an L-I problem requiring L-II intervention. This goes beyond the Governor Enhancement's eigenform detection -- it classifies *why* the agent is stuck, not just *that* it is stuck.
+- **L-II event tracking:** Log guardrail additions, spec revisions, and prompt restructuring as Learning II events. Measure their effectiveness across subsequent iterations. Retire L-II interventions that don't reduce failure recurrence.
+- **Intervention prescription:** When L-I stagnation is detected, suggest specific L-II actions (add guardrail, revise spec, restructure prompt) rather than allowing continued futile iteration.
+
+See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#learning-level-tracker) for the full enhancement specification and [Levels of Learning](./CYBERNETICS-ANALYSIS.md#levels-of-learning) for the underlying theory.
+
+### Double Bind Detector
+
+A plugin implementing Bateson's double bind theory (1956) -- analyzing the constraint space for logical contradictions that cause oscillation no amount of guardrails can fix. This complements the Governor Enhancement's oscillation detection: the governor detects *that* oscillation is occurring; the Double Bind Detector diagnoses *why*.
+
+- **Constraint extraction:** Parse specs, guardrails, and `AGENTS.md` for imperatives (must/must-not/should/should-not).
+- **Contradiction detection:** Check for mutual exclusivity between constraints (e.g., "implement feature X" + "don't modify files outside scope" when X requires shared utility changes). Four contradiction types: scope, pattern, completeness, and priority conflicts.
+- **Differential diagnosis:** When oscillation is detected, distinguish amnesiac oscillation (agent forgets failed approaches -- needs hysteresis/guardrails) from double-bind oscillation (constraints contradict each other -- needs constraint resolution). This is critical because adding guardrails to a double bind makes it *worse*.
+- **Human-surfacing:** Present detected contradictions to the operator with the conflicting constraints and suggested resolution paths.
+
+See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#double-bind-detector) for the full enhancement specification and [The Double Bind](./CYBERNETICS-ANALYSIS.md#the-double-bind) for the underlying theory.
 
 ### VSM Dashboard (Viable System Model Visualization)
 
@@ -386,13 +445,25 @@ These insights synthesize the cybernetics analysis with the implementation surve
 
 8. **POSIWID reveals truth.** Monitor what the system actually does, not what it says it's doing. A System 3* audit function that tracks actual behavior provides the transparency that most agent systems lack entirely. See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#posiwid).
 
+9. **Learning levels determine intervention type.** Bateson's hierarchy predicts that Learning I (iterative error correction) cannot solve Learning II problems (inadequate strategy set). When the same failure *class* recurs across iterations, the intervention must target the strategy set (add guardrails, revise specs) rather than the specific error. Plugins should detect the learning level mismatch and prescribe the correct intervention. See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#levels-of-learning).
+
+10. **Contradictions in the constraint space cause oscillation that guardrails cannot fix.** Bateson's double bind reveals that some agent oscillation is caused by contradictory constraints, not by lack of memory. Adding guardrails to a double bind makes it worse. Plugins should distinguish amnesiac oscillation (needs hysteresis) from double-bind oscillation (needs constraint resolution) before prescribing treatment. See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#the-double-bind).
+
+11. **The black box demands external observation.** The LLM's internal state is unobservable. Any control architecture that depends on the agent's self-reported state -- confidence, understanding, completeness assessment -- is cybernetically unsound. Design all comparators to observe environmental state changes (git diff, exit codes, file existence), not agent self-reports. See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#the-black-box-methodology).
+
+12. **Track signal quality, not just quantity.** Shannon's channel capacity theorem predicts that context *quality* (signal-to-noise ratio) matters more than context *size* (utilization percentage). A 30% utilized context full of error logs is more degraded than a 70% context with clean state. Plugins should trigger rotation on SNR degradation, not merely token count. See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#channel-capacity-and-the-context-window).
+
+13. **Catastrophic failures need ejection, not iteration.** Beer's algedonic signals distinguish normal backpressure ("try again, tests failed") from existential threats ("stop trying, escalate"). All-tests-failing, security vulnerabilities, and runaway token spend require halting the loop, not another iteration. Plugins should implement an emergency bypass channel separate from normal feedback. See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#algedonic-signals-the-emergency-bypass-channel).
+
+14. **Context is structure, not information.** Maturana's structural determinism means loading files into context *reconfigures the agent's behavioral repertoire*, not merely "informs" it. Loading order matters -- specs before code produces a different agent than code before specs. Negative examples ("don't do X") activate the prohibited pattern. Plugins should enforce loading order and prefer positive phrasing in guardrails. See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#structural-determinism).
+
 ## Sources and References
 
 ### Knowledge Base Documents
 
 - [OVERVIEW.md](./OVERVIEW.md) -- Ralph Loop conceptual foundation
 - [IMPLEMENTATION.md](./IMPLEMENTATION.md) -- Technical implementation patterns, prompt templates, loop scripts
-- [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md) -- Cybernetic theory applied to Ralph (first-order, second-order, VSM)
+- [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md) -- Cybernetic theory applied to Ralph (first-order, second-order, management, ecological cybernetics)
 - [FAILURE-MODES.md](./FAILURE-MODES.md) -- Failure patterns, gutter detection, context rot
 - [ALTERNATIVES.md](./ALTERNATIVES.md) -- Implementation comparison, agentic coding landscape
 - [TASK-SPAWNING-GUIDE.md](../task-spawning/TASK-SPAWNING-GUIDE.md) -- Task tool mechanics, context isolation, parallel execution
@@ -418,3 +489,13 @@ These insights synthesize the cybernetics analysis with the implementation surve
 - [2026: The Year of the Ralph Loop Agent](./sources/blog-year-of-ralph-loop-agent/) -- Alexander Gekov
 - [Ralph Wiggum Showdown](./sources/video-ralph-wiggum-showdown/) -- Dex Horthy, Geoffrey Huntley
 - [Advanced Context Engineering for Coding Agents](./sources/blog-advanced-context-engineering/) -- Dex Horthy
+
+### Cybernetics Literature
+
+- W. Ross Ashby, *Design for a Brain: The Origin of Adaptive Behaviour* (1952) -- ultrastability, two-tier adaptive loops
+- W. Ross Ashby, *An Introduction to Cybernetics* (1956) -- black box methodology, variety, requisite variety
+- Claude Shannon, "A Mathematical Theory of Communication" (1948) -- channel capacity, signal-to-noise ratio
+- Roger Conant and W. Ross Ashby, "Every Good Regulator of a System Must Be a Model of That System" (1970)
+- Stafford Beer, *The Heart of Enterprise* (1979) -- redundancy of potential command, algedonic signals
+- Gregory Bateson, *Steps to an Ecology of Mind* (1972) -- learning levels hierarchy (L-0 through L-III)
+- Gregory Bateson, Don D. Jackson, Jay Haley, and John Weakland, "Toward a Theory of Schizophrenia" (1956) -- the original double bind paper
