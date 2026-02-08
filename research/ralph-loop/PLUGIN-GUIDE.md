@@ -371,6 +371,70 @@ A plugin implementing Bateson's learning hierarchy (1972) -- classifying system 
 
 See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#learning-level-tracker) for the full enhancement specification and [Levels of Learning](./CYBERNETICS-ANALYSIS.md#levels-of-learning) for the underlying theory.
 
+### Escalation Vocabulary
+
+A plugin implementing a named escalation vocabulary for the Helmsman -- a structured progression from light intervention to loop ejection. This vocabulary maps directly to Bateson's learning hierarchy and provides actionable guidance for when to escalate beyond normal iteration.
+
+**Escalation levels:**
+
+| Level | Name | Learning Level | Description | Trigger Patterns |
+|-------|------|----------------|-------------|-----------------|
+| **E-0** | Patch | L-I | Targeted fix to specific error; stays within current strategy | Single test failure, lint error, type error; agent proceeds normally |
+| **E-I** | Refactor | L-I → L-II boundary | Structural change to improve approach without changing strategy | 2x-fail on same error class; file thrashing detected; SNR degradation |
+| **E-II** | Redesign | L-II | Fundamental strategy change -- new approach, spec revision, guardrail addition | 3x-fail (gutter); L-I stagnation detected; eigenform analysis confirms stuck state |
+| **E-III** | Escalate to human | L-II → L-III boundary | Contradictory constraints or unclear goals require human judgment | Double bind detected; contradictory specs; priority conflict unresolvable by agent |
+| **E-IV** | Eject from loop | Algedonic | Catastrophic failure -- all tests broken, security vulnerability, runaway cost | Algedonic signal (Beer); all-tests-failing; security scan alerts; budget threshold exceeded |
+
+**Cybernetic grounding:**
+
+- **E-0 through E-I** map to Ashby's ultrastability first-tier adaptation -- corrective adjustments within the current parameter space. The agent iterates normally; hooks provide guidance.
+- **E-II** triggers Ashby's ultrastability second-tier adaptation -- restructuring the parameter space itself. The agent must change strategy, not merely correct within strategy. This is Bateson's L-II event: modifying the repertoire of possible behaviors.
+- **E-III** recognizes the limits of autonomous adaptation. Double bind contradictions and L-III learning problems (changing the learning process itself) require human judgment. The agent cannot resolve meta-level conflicts without an external reference frame.
+- **E-IV** implements Beer's algedonic channel -- the emergency bypass that distinguishes "needs another iteration" from "stop iterating, escalate immediately." Catastrophic failures demand loop termination, not continued iteration.
+
+**Hook detection patterns:**
+
+- **Gutter detection** (3x-fail, file thrashing) triggers E-II -- the agent is in a limit cycle requiring structural change, not more L-I iteration. See [FAILURE-MODES.md](./FAILURE-MODES.md#behavioral-failures).
+- **Eigenform analysis** distinguishes productive patterns (stable convergence) from stuck attractors (stable oscillation), prescribing E-0/E-I for the former, E-II for the latter. See the First-Order Feedback Hooks concept in this document.
+- **Double bind detection** triggers E-III -- contradictory constraints cannot be resolved by adding more guardrails. See the Double Bind Detector concept below.
+- **Algedonic signals** trigger E-IV -- all-tests-failing, security vulnerabilities, runaway cost. See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#algedonic-channel).
+- **Context SNR degradation** triggers E-I/E-II depending on severity -- high noise degrades controller variety, requiring rotation. See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#channel-capacity-monitor).
+- **Learning level mismatch** (L-I stagnation) triggers E-II -- the agent needs a strategy change, not more iteration. See the Learning Level Tracker concept above.
+
+**Escalation state persistence:**
+
+To prevent escalation amnesia across context rotations, the escalation level is recorded in the state file (`.claude/*.local.md`) with YAML frontmatter:
+
+```yaml
+---
+escalation_level: E-II
+escalation_reason: "3x-fail detected on test suite; eigenform analysis confirms stuck state"
+escalation_timestamp: 2026-02-08T14:32:00Z
+last_successful_level: E-0
+---
+```
+
+When a fresh context worker reads the state file, it inherits the current escalation level. This prevents the system from resetting to "patch" mode after a "redesign" was prescribed. The escalation level provides a memory mechanism that survives context boundaries -- a key requirement for autopoietic learning.
+
+**Escalation decay:**
+
+After successful completion at a higher escalation level (e.g., tests pass after E-II redesign), the system should gradually de-escalate rather than snap back to E-0. Decay schedule:
+
+- **E-IV → E-0**: Immediate reset after human intervention resolves the catastrophic failure
+- **E-III → E-II**: After human clarifies constraints, attempt autonomous redesign before returning to normal iteration
+- **E-II → E-I**: After 2 successful iterations at E-II level (no failures), de-escalate to refactor mode
+- **E-I → E-0**: After 3 successful iterations at E-I level (clean tests, no regressions), de-escalate to patch mode
+
+This decay mechanism prevents premature de-escalation (snapping back to E-0 after a single success) while avoiding permanent high-alert mode. The decay thresholds are tunable based on project complexity and failure frequency.
+
+**Plugin implementation:**
+
+- **PostToolUse hook**: Analyze tool output for failure patterns, classify escalation level, update state file
+- **PreToolUse hook**: Read current escalation level from state file, adjust allowed-tools and guidance accordingly
+- **Stop hook**: Check escalation level; if E-IV, eject from loop rather than continuing iteration; if E-III, surface to human with diagnostic report
+
+See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md) for the theoretical foundations of each escalation level and [FAILURE-MODES.md](./FAILURE-MODES.md) for the failure patterns that trigger escalation.
+
 ### Double Bind Detector
 
 A plugin implementing Bateson's double bind theory (1956) -- analyzing the constraint space for logical contradictions that cause oscillation no amount of guardrails can fix. This complements the first-order feedback hooks' oscillation detection: the hooks detect *that* oscillation is occurring; the Double Bind Detector diagnoses *why*.
@@ -396,6 +460,159 @@ Visualize the coding session as a viable system using Stafford Beer's model. Eac
 | **System 5** (Identity) | Goal alignment | JTBD completion percentage, acceptance criteria status |
 
 This concept extends the first-order correction feedback (as prototyped in the governor) into a comprehensive system health view. The dashboard does not need to be visual -- it could be a structured state file that Claude reads each iteration, providing System 3* audit information as part of the context.
+
+### Initialization Protocol
+
+Before the Helmsman can iterate autonomously, it must verify that the system has the prerequisites for cybernetic control: defined goals (System 5), functional comparators (System 3), and sufficient variety (controller capacity). This initialization protocol implements the transition from human conversation to autonomous iteration.
+
+This is not a per-iteration concern -- the Per-Iteration Coordination Protocol handles ongoing operation -- but rather a one-time bootstrap that ensures the loop starts from a valid state. In [IMPLEMENTATION.md](./IMPLEMENTATION.md)'s three-phase workflow, initialization spans Phase 1 (Define Requirements) and Phase 2 (Planning), establishing the preconditions for Phase 3 (Iterative Execution).
+
+**Initialization checklist for `/helmsman:start`:**
+
+1. **Goal validation (System 5):** Read specification files (`specs/*.md` or equivalent). Verify at least one spec exists with explicit acceptance criteria. If missing, prompt the user to define them before proceeding. Without defined goals, the feedback loop has no reference signal -- the comparator cannot determine whether work is complete.
+
+2. **Feedback channel verification (System 3):** Check that test, lint, and build commands exist in the project (package.json scripts, Makefile targets, or equivalent). These are the comparator mechanisms. Without them, the feedback loop has no sensor -- the Helmsman cannot verify progress objectively.
+
+3. **Initial state file creation:** Create `.claude/helmsman.local.md` with initial YAML frontmatter (escalation_level: E-0, iteration_count: 0, variety_metrics: {}, etc.). This state file provides persistence across context rotations, storing the escalation level, variety tracking, and learned constraints.
+
+4. **Guardrail loading (Autopoietic Learning):** Check for existing guardrail files from previous sessions (`guardrails.md` or equivalent). Load them into context if found. This restores the system's learned constraints, enabling autopoietic self-modification across session boundaries.
+
+5. **Plan confirmation (HITL gate):** Present the user with: detected goals, available feedback channels, proposed first task. Wait for explicit confirmation before entering autonomous iteration. This human-in-the-loop gate ensures the operator has oversight before the Helmsman operates autonomously.
+
+**Re-initialization after session breaks:**
+
+When the Helmsman is resumed after a session break, the initialization protocol reads the existing state file instead of creating a new one. This restores escalation level, variety metrics, and learned constraints from the previous session. The guardrail loading step (4) ensures continuity across sessions -- the system remembers what it learned, implementing the "tune like a guitar" philosophy programmatically.
+
+**Cross-references:**
+
+- See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the three-phase workflow (Phase 1: Define Requirements, Phase 2: Planning, Phase 3: Iterative Execution)
+- See the Per-Iteration Coordination Protocol section below for the ongoing runtime flow after initialization completes
+- See the Autopoietic Learning Plugin concept for guardrail persistence and self-modifying constraints
+
+## Per-Iteration Coordination Protocol
+
+The plugin concepts above -- First-Order Feedback Hooks, Black Box Verification, Backpressure Plugin, Context Rotation, Autopoietic Learning, Ethical Variety Monitor, Learning Level Tracker, Escalation Vocabulary, Double Bind Detector, VSM Dashboard -- are described independently, each grounded in a specific cybernetics principle. At runtime, however, they do not fire in isolation. They must execute in a defined sequence within each iteration to avoid conflicts, redundant computation, and inconsistent state.
+
+This section defines the operational glue: a three-phase per-iteration protocol that sequences all Helmsman checks into a coherent runtime flow.
+
+### Three-Phase Protocol
+
+The Helmsman organizes checks by timing relative to the agent's work: before, during, and after. Each plugin concept maps to one or more checkpoints in this protocol.
+
+| Phase | Checkpoint | Plugin Concept | Purpose |
+|-------|-----------|----------------|---------|
+| **Pre-iteration** | Read escalation state | Escalation Vocabulary | Load current escalation level from state file |
+| | Check escalation level | Escalation Vocabulary | If E-IV, eject; if E-III, surface to human |
+| | Check context utilization / SNR | Context Rotation / Channel Capacity | Verify controller variety is sufficient for iteration |
+| | Load guardrails and learned constraints | Autopoietic Learning | Inject learned patterns into agent's behavioral repertoire |
+| | Validate feedback channels exist | Backpressure | Ensure test/lint/build commands are present (upstream steering) |
+| **Mid-iteration** | PreToolUse: validate tool use | Backpressure | Check tool invocation against current escalation level constraints |
+| | PostToolUse: analyze tool output | First-Order Feedback Hooks | Detect failure patterns in tool output (exit codes, error messages) |
+| | PostToolUse: classify failure by learning level | Learning Level Tracker | Distinguish L-I correction from L-II stagnation |
+| | PostToolUse: check for oscillation | Double Bind Detector | Run differential diagnosis on repeated failures |
+| | PostToolUse: update variety metrics | Ethical Variety Monitor | Track whether actions increase or decrease future choices |
+| | PostToolUse: POSIWID audit | VSM Dashboard / System 3* | Compare stated task vs actual behavior (files changed, tools invoked) |
+| **Post-iteration** | Black Box Verification | Black Box Verification | Claim-vs-evidence audit: git diff vs stated changes |
+| | Acceptance gate (deterministic) | Backpressure | All objective comparators pass? (tests, lint, build, type check) |
+| | Acceptance gate (non-deterministic) | Backpressure / System 3* | LLM-as-judge for subjective criteria (code clarity, UX quality) |
+| | Update escalation level | Escalation Vocabulary | Adjust based on iteration outcome (success -> de-escalate; failure -> escalate) |
+| | Update eigenform tracking | Autopoietic Learning | Detect new failure patterns; generate guardrails if pattern recurs |
+| | Write updated state to state file | Context Rotation | Persist escalation level, variety metrics, eigenform observations |
+| | Coordination decision | All concepts | Continue iteration / rotate context / escalate / eject |
+
+### Coordination Decision Flowchart
+
+After the post-iteration checks complete, the Helmsman makes a coordination decision that determines the next action. This decision integrates signals from all plugin concepts into a single routing choice.
+
+```
+[Post-Iteration Checks Complete]
+         |
+         v
+   All gates pass?
+         |
+    Yes  |  No
+         |   \
+         v    v
+    De-escalate   Classify learning level
+    one level          |
+    (with decay)       |
+         |             v
+         |        L-I correction needed?
+         |             |
+         |        Yes  |  No
+         |             |   \
+         v             v    v
+    Continue     Continue    L-I stagnation detected?
+    iteration    with             |
+         ^       corrective   Yes  |  No
+         |       guidance          |   \
+         |            ^            v    v
+         |            |       Escalate   Double bind detected?
+         |            |       to E-II         |
+         +------------+       (redesign)  Yes |  No
+                                   ^          |   \
+                                   |          v    v
+                                   |     Escalate  Algedonic signal?
+                                   |     to E-III       |
+                                   |     (human)    Yes |  No
+                                   |          ^         |   \
+                                   +----------+         v    v
+                                                   Escalate  Context
+                                                   to E-IV   utilization
+                                                   (eject)   > 80%?
+                                                        ^         |
+                                                        |    Yes  |  No
+                                                        |         |   \
+                                                        |         v    v
+                                                        |    Force     Continue
+                                                        |    context   iteration
+                                                        |    rotation  (loop)
+                                                        |         ^         ^
+                                                        +---------+---------+
+```
+
+**Decision paths:**
+
+- **All gates pass:** De-escalate one level using the decay schedule from the Escalation Vocabulary concept. Continue iteration at the new (lower) escalation level.
+- **Deterministic gates fail:** Classify the failure by learning level using the Learning Level Tracker. If L-I correction is sufficient, continue with corrective guidance. If L-I stagnation is detected (same failure class recurs), escalate to E-II (redesign).
+- **Double bind detected:** The Double Bind Detector identifies contradictory constraints in the specification. Escalate to E-III (human intervention required).
+- **Algedonic signal:** The Backpressure Plugin or VSM Dashboard detects a catastrophic failure (all tests failing, security vulnerability). Escalate to E-IV (eject from loop).
+- **Context utilization > 80%:** The Context Rotation Plugin detects SNR degradation or token budget exhaustion. Force context rotation before the next iteration.
+
+### Design Rationale
+
+An early exploration of cybernetics applied to the Ralph Loop proposed an Outer-Middle-Inner check sequence: Outer (goal alignment), Middle (variety/channel capacity), Inner (tool execution correctness). This conceptual layering inspired the Helmsman's architecture, but the plugin implementation organizes checks by timing rather than by conceptual layer.
+
+**Why timing-based organization?** The Claude Code plugin system uses hooks that fire at specific tool-use events -- PreToolUse and PostToolUse are event-driven, not invoked by agent reasoning. The agent does not explicitly "think through three layers" sequentially; instead, hooks intercept tool calls at runtime and inject guidance. The Pre/Mid/Post structure matches this event-driven architecture.
+
+**What the phases correspond to:**
+
+- **Pre-iteration checks** ensure the agent starts in a valid state (escalation level appropriate, guardrails loaded, feedback channels functional). This prevents wasted iteration on unrecoverable conditions.
+- **Mid-iteration checks** provide real-time steering during tool execution, catching failures as they occur and adjusting agent behavior dynamically. This is the first-order feedback loop in action.
+- **Post-iteration checks** perform aggregate analysis across the entire iteration, comparing the agent's work against objective criteria and deciding whether to continue, escalate, or eject. This is the higher-order control loop.
+
+The Outer-Middle-Inner conceptual model still applies -- the Pre/Mid/Post protocol *implements* those layers, but at the infrastructure level (hooks firing at defined events) rather than the reasoning level (agent thinking through a checklist).
+
+### Task Spawning as Layer Implementation
+
+The early exploration's three-layer model proposed named agents per layer (operational, strategy, goal). Without Task spawning, this required a single agent to reason through all three layers sequentially -- a design constrained by the single-context-window assumption.
+
+With Task spawning (see the Task-Based Context Rotation Architecture section below), the conceptual layers become implementable as **fresh-context workers** rather than named agents:
+
+| Conceptual Layer | Task Worker Role | Why Fresh Context Matters |
+|------------------|-----------------|--------------------------|
+| **Inner (operational)** | Implementation worker | Uncontaminated by previous failed approaches; operates with full 200K variety on the current task |
+| **Middle (strategy)** | Meta-analysis worker | Reads iteration history from state files *without inheriting accumulated context bias*; can diagnose L-I stagnation patterns that the main session cannot see from within |
+| **Outer (goal)** | Spec-vs-code gap analysis worker | Fresh comparison of specifications against current code state, free from the drift that accumulates during extended sessions |
+
+**Key reinterpretations enabled by Task spawning:**
+
+- **Strategy adjustment in fresh context:** When the Coordination Protocol prescribes an E-II (redesign) escalation, the redesign can happen in a fresh-context Task worker. The worker reads the state file (which records what failed and why) but does not inherit the biased context that led to the failure. This is a genuine L-II intervention -- the strategy change happens in a context uncontaminated by the failed strategy.
+- **Attempt summarization as compaction:** A fresh-context worker that reads raw iteration logs and produces a compressed pattern summary implements the "compaction" that the Context Rotation Plugin describes. The summary becomes the state file content for the next iteration -- distilled to end goal, approach, completed steps, current state, and next steps.
+- **Prompt/guardrail revision without bias:** Rewriting guardrails or revising specs from within the context that produced the failure is paradoxical -- the same biased context rewrites its own constraints. A fresh-context worker avoids this: it can analyze the failure pattern from state file evidence and produce revised constraints without inheriting the cognitive rut.
+- **Orchestrator-worker state contract:** The structured output formats that the early exploration prescribed per layer (Goal Interpretation / Success Criteria for outer; Attempt Pattern Summary / Strategy Adjustment for middle; Test Feedback / Error Analysis for inner) map naturally to the **state file schema** that the orchestrator writes and Task workers read. They are not agent output formats -- they are the contract between coordinator and workers.
+
+This reinterpretation does not add new plugin concepts. It connects the Per-Iteration Coordination Protocol (which sequences checks via hooks) to the Task-Based Context Rotation Architecture (which provides the fresh-context infrastructure), showing how the conceptual layers are implemented through both mechanisms working together: hooks for real-time mid-iteration steering, Task workers for fresh-context higher-order analysis.
 
 ## Task-Based Context Rotation Architecture
 
