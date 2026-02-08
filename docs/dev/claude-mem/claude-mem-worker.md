@@ -48,16 +48,16 @@ For version 9.1.1:
 
 ```bash
 # Start the worker
-bun ~/.claude/plugins/cache/thedotmack/claude-mem/9.1.1/scripts/worker-cli.js start
+bun $HOME/.claude/plugins/cache/thedotmack/claude-mem/9.1.1/scripts/worker-cli.js start
 
 # Restart after a crash or config change
-bun ~/.claude/plugins/cache/thedotmack/claude-mem/9.1.1/scripts/worker-cli.js restart
+bun $HOME/.claude/plugins/cache/thedotmack/claude-mem/9.1.1/scripts/worker-cli.js restart
 
 # Check if the worker is alive
-bun ~/.claude/plugins/cache/thedotmack/claude-mem/9.1.1/scripts/worker-cli.js status
+bun $HOME/.claude/plugins/cache/thedotmack/claude-mem/9.1.1/scripts/worker-cli.js status
 
 # Stop the worker
-bun ~/.claude/plugins/cache/thedotmack/claude-mem/9.1.1/scripts/worker-cli.js stop
+bun $HOME/.claude/plugins/cache/thedotmack/claude-mem/9.1.1/scripts/worker-cli.js stop
 ```
 
 ### Option 3: HTTP admin endpoints
