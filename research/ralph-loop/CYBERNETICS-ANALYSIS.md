@@ -1043,55 +1043,36 @@ Maps to: [The Double Bind](#the-double-bind) section. Adding guardrails to a dou
 
 ## Verification
 
-These commands are externalized comparators -- they verify document structure independently of the author's self-assessment, embodying the [Externalization Paradigm](#the-externalization-paradigm-as-cybernetic-design) principle that comparators must be separate from the effector they evaluate.
+Two scripts serve as externalized comparators -- they verify document structure independently of the author's self-assessment, embodying the [Externalization Paradigm](#the-externalization-paradigm-as-cybernetic-design) principle that comparators must be separate from the effector they evaluate. Run from the repository root:
 
 ```bash
-# Good Regulator Theorem: Map must model the document
-# Concept-to-Enhancement Map row count should equal number of mapped concepts
-grep -c "^|" research/ralph-loop/CYBERNETICS-ANALYSIS.md | head -1
-# Count theory subsections (### level within theory sections)
-grep -c "^### " research/ralph-loop/CYBERNETICS-ANALYSIS.md
+# Git Bash (macOS, Linux, Windows Git Bash)
+bash research/ralph-loop/verify-autopoietic-structure.sh
 
-# Externalized Comparator: This section itself must be machine-executable
-# (Verified by the existence of this code block)
-
-# Requisite Variety: Tradition groups match cybernetic traditions
-grep -c "^### .*Enhancements$" research/ralph-loop/CYBERNETICS-ANALYSIS.md
-# Expected: 4 (First-Order, Second-Order, Management, Ecological)
-
-# Entailment Mesh: Cross-references are bidirectional
-grep -c "See also:" research/ralph-loop/CYBERNETICS-ANALYSIS.md
-# Expected: >= 10 (5 bidirectional pairs)
-grep -c "Applied in:" research/ralph-loop/CYBERNETICS-ANALYSIS.md
-# Expected: >= 8 (theory → enhancement forward references)
-grep -c "Maps to:" research/ralph-loop/CYBERNETICS-ANALYSIS.md
-# Expected: 8 (enhancement → theory backward references)
-
-# Structural Determinism: No concept used before defined
-# (Manual review: only 1 tolerated forward reference at line ~614)
-
-# Channel Capacity: Key Insights compress the full document
-grep -c "^\*\*" research/ralph-loop/CYBERNETICS-ANALYSIS.md
-# Key insight count should be < concept count (compression, not enumeration)
-
-# Redundancy of Potential Command: Multiple paths to each concept
-grep -c "^- \[" research/ralph-loop/CYBERNETICS-ANALYSIS.md
-# Sources section should provide independent access paths
-
-# POSIWID: Introduction describes actual structure
-head -4 research/ralph-loop/CYBERNETICS-ANALYSIS.md | grep -c "patholog\|enhancement\|insight\|autopoietic"
-# Expected: >= 1 (introduction mentions these structural elements)
-
-# Negative Feedback: Pathologies cite principle violations
-grep -c "Principle violated:" research/ralph-loop/CYBERNETICS-ANALYSIS.md
-# Expected: 4 (one per pathology)
-
-# Autopoiesis: This verification section exists and references itself
-grep -c "## Verification" research/ralph-loop/CYBERNETICS-ANALYSIS.md
-# Expected: 1
+# PowerShell (Windows, cross-platform)
+pwsh research/ralph-loop/verify-autopoietic-structure.ps1
 ```
 
-These commands are externalized comparators: they verify document structure independently of the author's self-assessment, embodying the Externalization Paradigm that is the fundamental cybernetic insight of the Ralph Loop.
+Each script runs 12 checks mapping the structural properties declared in [Document Architecture](#document-architecture) to their justifying principles:
+
+| Check | Principle | Verifies |
+|---|---|---|
+| Concept-to-Enhancement Map rows | Good Regulator Theorem (Conant-Ashby) | Map models the document (row count >= 30) |
+| Tradition group count | Requisite Variety (Ashby) | Group count = 4 (First-Order, Second-Order, Management, Ecological) |
+| See also cross-references | Entailment Mesh (Pask) | Bidirectional theory-to-theory links >= 10 (5 pairs) |
+| Applied in forward references | Entailment Mesh (Pask) | Theory-to-enhancement links >= 8 |
+| Maps to backward references | Entailment Mesh (Pask) | Enhancement-to-theory links >= 8 |
+| Key insight count < concept count | Channel Capacity (Shannon) | Insights compress rather than enumerate |
+| Source links | Redundancy of Potential Command (Beer) | Multiple independent access paths to each concept (>= 10) |
+| Introduction content | POSIWID (Beer) | Introduction describes actual structure, not aspirational goals |
+| Pathology principle citations | Negative Feedback (Wiener) | Each pathology cites the principle whose violation it represents (>= 4) |
+| Verification section exists | Autopoiesis (Maturana/Varela) | Self-referential: this section verifies its own existence |
+| Document Architecture before First-Order | Structural Determinism (Maturana) | Section ordering satisfies dependency loading order |
+| Verification before Sources | Structural Determinism (Maturana) | Verification precedes reference material |
+
+**Manual review (not automatable):** Structural Determinism also requires that no concept is used before it is defined. The document has 1 tolerated forward reference (the [Double Bind](#the-double-bind) section references the [Oscillation](#oscillation) pathology). This satisfies the Document Architecture constraint of "1 tolerated forward ref."
+
+These scripts are externalized comparators: they verify document structure independently of the author's self-assessment, embodying the Externalization Paradigm that is the fundamental cybernetic insight of the Ralph Loop.
 
 ## Sources
 
