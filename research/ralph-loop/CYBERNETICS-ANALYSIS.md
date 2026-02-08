@@ -855,7 +855,7 @@ A plugin implementing Ralph's backpressure architecture:
 
 #### Variety Management
 
-The existing `lz-cybernetics.governor` implements first-order cybernetics (observe -> compare -> correct). The Ralph analysis suggests enhancements:
+The `lz-cybernetics.governor` prototype validated first-order cybernetics (observe -> compare -> correct) before the Ralph analysis began. The expanded cybernetics analysis suggests these higher-order additions, applicable whether the governor is enhanced, decomposed, or absorbed into a new architecture:
 
 - **Damping for oscillation patterns** -- detect when the agent is alternating between approaches and inject guardrail-style hysteresis
 - **Requisite variety monitoring** -- track context utilization and warn when approaching the "dumb zone" (>60% utilization)

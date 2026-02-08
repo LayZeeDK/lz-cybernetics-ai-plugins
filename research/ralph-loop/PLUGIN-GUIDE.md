@@ -4,7 +4,7 @@ This document is a design guide for building Claude Code plugins that improve on
 
 **Prerequisites:** [OVERVIEW.md](./OVERVIEW.md) (Ralph concepts), [IMPLEMENTATION.md](./IMPLEMENTATION.md) (technical patterns), [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md) (theoretical framework).
 
-**Prior art:** The [lz-cybernetics.governor](../../plugins/lz-cybernetics.governor/) plugin demonstrates first-order cybernetic feedback (observe-compare-correct) applied to Claude Code tool calls. This guide extends that foundation with variety management, damping, autopoiesis, and context rotation.
+**Prior art:** The [lz-cybernetics.governor](../../plugins/lz-cybernetics.governor/) plugin is an early proof of concept that validated first-order cybernetic feedback (observe-compare-correct) applied to Claude Code tool calls. It predates the Ralph Loop research and was originally scoped as a single monolithic "skill-verifier" -- before the cybernetics analysis expanded to cover variety management, autopoiesis, viable systems, ecological cybernetics, and context rotation. The governor's hook patterns (PreToolUse/PostToolUse, error vectors, oscillation detection) are validated techniques that inform the architecture below, but the plugin itself may be redesigned, decomposed, or absorbed into the new plugin family this guide proposes.
 
 ## The AGENTS.md Naming Collision
 
@@ -113,7 +113,7 @@ Ralph's core cybernetic insight is that the controller is the environment, not t
 
 > "Ralph Loop breaks the limitations of relying on the LLM's self-assessment. [...] This pattern is essentially mandatory; it does not depend on the agent's subjective judgment but on external verification." -- [ReAct to Ralph Loop](./sources/blog-react-to-ralph-loop/)
 
-**Plugin implication:** Hooks should delegate judgment to external tools, not LLM self-assessment. PostToolUse hooks that check tool output against objective criteria (test results, build status, lint output) and use `decision: "block"` to force continuation are cybernetically sound. The governor plugin's observe-compare-correct loop is a working example of this pattern.
+**Plugin implication:** Hooks should delegate judgment to external tools, not LLM self-assessment. PostToolUse hooks that check tool output against objective criteria (test results, build status, lint output) and use `decision: "block"` to force continuation are cybernetically sound. The governor prototype's observe-compare-correct loop validated this pattern.
 
 **Improvement over Anthropic's plugin:** Use multi-layered objective verification (tests + build + lint + type check), not just completion promise string matching. The completion promise is a necessary signal, but it is not sufficient -- the promise confirms the agent *believes* it is done, not that it actually *is* done.
 
@@ -137,7 +137,7 @@ A controller must have at least as much variety (range of possible states) as th
 
 **Plugin implication:** Monitor variety balance and trigger interventions at thresholds. When context utilization crosses 60%, the controller's effective variety is declining. When it crosses 80%, force rotation. When a gutter pattern is detected (same command fails 3 times, file thrashing), variety has collapsed -- force fresh context.
 
-**Improvement over all implementations:** No existing implementation tracks variety explicitly. The governor plugin could be enhanced to measure context utilization, count unique tool invocations per iteration, and detect variety collapse patterns (repeated identical actions).
+**Improvement over all implementations:** No existing implementation tracks variety explicitly. The first-order feedback hooks (as prototyped in the governor) could be extended to measure context utilization, count unique tool invocations per iteration, and detect variety collapse patterns (repeated identical actions).
 
 ### Principle 3: Implement Damping
 
@@ -218,15 +218,15 @@ Sources: [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md) for cybernetic rol
 
 ## Plugin Architecture Concepts
 
-The following plugin concepts extend the governor plugin's first-order cybernetic feedback (observe-compare-correct) with higher-order capabilities.
+The following plugin concepts build on the first-order cybernetic feedback pattern (observe-compare-correct) validated by the governor prototype, adding higher-order capabilities from the expanded cybernetics analysis.
 
-### Governor Enhancement (extend lz-cybernetics.governor)
+### First-Order Feedback Hooks
 
-The existing governor plugin implements PreToolUse and PostToolUse hooks with schema validation, invariant checking, oscillation detection, and structured error vectors. Enhancements suggested by the cybernetics analysis:
+The governor prototype validated PreToolUse and PostToolUse hooks with schema validation, invariant checking, oscillation detection, and structured error vectors. Whether these capabilities are enhanced in place, decomposed into focused plugins, or absorbed into a larger architecture is a design decision for implementation. The cybernetics analysis suggests these higher-order additions:
 
 - **POSIWID analysis:** Monitor what the system actually does (files changed, tools invoked) vs what it was asked to do. Flag divergence between stated task and actual behavior. This is Stafford Beer's System 3* audit function -- sporadic monitoring that catches drift the regular control loop misses.
 - **Eigenform detection:** Recognize when the agent is in a stable productive pattern (eigenform) vs a stable but unproductive attractor (stuck). Productive patterns: consistent test-pass-commit cycles, focused file edits. Stuck patterns: repeated identical tool calls, edit-revert cycles, growing diff with no test improvement.
-- **Adaptive damping:** Adjust the feedback intervention rate based on convergence signals. When the agent is converging (tests improving, lint errors decreasing), reduce intervention frequency. When diverging (regression detected), increase it. This prevents the governor from becoming noise during productive work.
+- **Adaptive damping:** Adjust the feedback intervention rate based on convergence signals. When the agent is converging (tests improving, lint errors decreasing), reduce intervention frequency. When diverging (regression detected), increase it. This prevents the feedback hooks from becoming noise during productive work.
 - **Variety monitoring:** Track effective context utilization as a proxy for controller variety. Warn at 60% utilization, escalate at 80%, force rotation beyond 80%. This operationalizes Ashby's Law as a runtime measurement.
 
 ### Black Box Verification
@@ -245,7 +245,7 @@ See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#black-box-verification) 
 A plugin implementing Ralph's backpressure architecture as cybernetic negative feedback:
 
 - **Upstream steering (PreToolUse):** Validate that the operational guide (Ralph's AGENTS.md or equivalent) contains required commands (test, lint, build) before allowing iterations to proceed. This ensures the feedback loop has functional sensors.
-- **Downstream steering (PostToolUse):** Check tool output for build/test failures and inject corrective instructions via `decision: "block"` with specific remediation guidance. The governor plugin already demonstrates this pattern with its error vectors.
+- **Downstream steering (PostToolUse):** Check tool output for build/test failures and inject corrective instructions via `decision: "block"` with specific remediation guidance. The governor prototype validated this pattern with its error vectors.
 - **Acceptance-driven gates:** Derive test requirements from specification files during the planning phase. Verify those tests exist before allowing commits. This connects System 5 (specifications) through System 3 (control) to System 1 (operations).
 - **Non-deterministic gates (System 3*):** LLM-as-judge evaluation for subjective criteria (creative quality, UX feel, code clarity). Binary pass/fail with configurable pass thresholds. Non-deterministic by nature -- the same work may pass or fail different audits -- but converges through iteration.
 
@@ -318,7 +318,7 @@ See [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md#learning-level-tracker) 
 
 ### Double Bind Detector
 
-A plugin implementing Bateson's double bind theory (1956) -- analyzing the constraint space for logical contradictions that cause oscillation no amount of guardrails can fix. This complements the Governor Enhancement's oscillation detection: the governor detects *that* oscillation is occurring; the Double Bind Detector diagnoses *why*.
+A plugin implementing Bateson's double bind theory (1956) -- analyzing the constraint space for logical contradictions that cause oscillation no amount of guardrails can fix. This complements the first-order feedback hooks' oscillation detection: the hooks detect *that* oscillation is occurring; the Double Bind Detector diagnoses *why*.
 
 - **Constraint extraction:** Parse specs, guardrails, and `AGENTS.md` for imperatives (must/must-not/should/should-not).
 - **Contradiction detection:** Check for mutual exclusivity between constraints (e.g., "implement feature X" + "don't modify files outside scope" when X requires shared utility changes). Four contradiction types: scope, pattern, completeness, and priority conflicts.
@@ -340,7 +340,7 @@ Visualize the coding session as a viable system using Stafford Beer's model. Eac
 | **System 4** (Intelligence) | Environmental awareness | Spec-vs-code gap analysis, new requirements detection |
 | **System 5** (Identity) | Goal alignment | JTBD completion percentage, acceptance criteria status |
 
-This concept extends the governor plugin's correction feedback into a comprehensive system health view. The dashboard does not need to be visual -- it could be a structured state file that Claude reads each iteration, providing System 3* audit information as part of the context.
+This concept extends the first-order correction feedback (as prototyped in the governor) into a comprehensive system health view. The dashboard does not need to be visual -- it could be a structured state file that Claude reads each iteration, providing System 3* audit information as part of the context.
 
 ## Task-Based Context Rotation Architecture
 
@@ -478,7 +478,7 @@ These insights synthesize the cybernetics analysis with the implementation surve
 
 ### Prior Art in This Repository
 
-- [lz-cybernetics.governor](../../plugins/lz-cybernetics.governor/) -- First-order cybernetic feedback plugin (observe-compare-correct)
+- [lz-cybernetics.governor](../../plugins/lz-cybernetics.governor/) -- Early proof of concept: first-order cybernetic feedback hooks (observe-compare-correct), predating the Ralph Loop research
 
 ### Primary Source Material
 
