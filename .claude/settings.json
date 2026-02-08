@@ -2,19 +2,5 @@
   "attribution": {
     "commit": "",
     "pr": ""
-  },
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/cleanup-claude-mem-orphans.mjs",
-            "timeout": 15
-          }
-        ]
-      }
-    ]
   }
 }
