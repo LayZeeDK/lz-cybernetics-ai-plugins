@@ -461,7 +461,7 @@ Approach A fails -> Try B -> B fails -> Try A -> A fails -> ...
 
 ## Implications for Plugin Development
 
-The cybernetics analysis reveals specific architectural patterns that map directly to Claude Code plugin mechanisms.
+The cybernetics analysis reveals specific architectural patterns that map directly to Claude Code plugin mechanisms. For the full design guide that synthesizes these implications into plugin architecture concepts, see [PLUGIN-GUIDE.md](./PLUGIN-GUIDE.md).
 
 ### 1. Ralph Patterns -> Claude Code Plugin Hooks
 

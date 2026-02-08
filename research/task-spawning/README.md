@@ -35,6 +35,7 @@ For the cybernetic model of context rotation and variety management, see the [Ra
 - [Ralph Loop Knowledge Base](../ralph-loop/) -- Core Ralph Loop documentation including implementation patterns, cybernetics analysis, failure modes, and metrics
 - [Ralph Loop Implementation](../ralph-loop/IMPLEMENTATION.md) -- Context rotation thresholds and subagent orchestration
 - [Ralph Loop Cybernetics Analysis](../ralph-loop/CYBERNETICS-ANALYSIS.md) -- Variety management and homeostasis models
+- [Cybernetics-Inspired Plugin Design Guide](../ralph-loop/PLUGIN-GUIDE.md) -- Design guide for building plugins that improve on Ralph using Task-based context rotation and cybernetics theory
 
 ## Sources
 

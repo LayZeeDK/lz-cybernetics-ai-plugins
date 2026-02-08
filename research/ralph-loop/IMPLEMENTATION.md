@@ -171,7 +171,7 @@ Ralph's context rotation addresses what the Alibaba Cloud article calls "Context
 
 > "Each round of the loop can be seen as a brand new session, with the agent no longer reading states from bloated history records. The agent directly scans the current project structure and log files through file reading tools. This pattern shifts 'state management' from the LLM's memory (token sequence) to the disk (file system)." -- [ReAct to Ralph Loop](./sources/blog-react-to-ralph-loop/)
 
-See [FAILURE-MODES.md](./FAILURE-MODES.md#context-related-failures) for detailed failure patterns around context rot and pollution.
+See [FAILURE-MODES.md](./FAILURE-MODES.md#context-related-failures) for detailed failure patterns around context rot and pollution. For Task-based context rotation within Claude Code plugins, see [TASK-SPAWNING-GUIDE.md](../task-spawning/TASK-SPAWNING-GUIDE.md#ralph-style-context-rotation-via-tasks).
 
 ## Subagent Orchestration
 
@@ -799,7 +799,7 @@ Document what you changed in progress.txt.
 
 ## Framework Implementations
 
-Several frameworks and tools have implemented Ralph Loop support, demonstrating its generality beyond bash scripts. For a broader comparison including dedicated orchestrators (ralph-orchestrator, Ralph TUI), spec-driven tools (Spec Kit, GSD), and the full agentic coding landscape, see [ALTERNATIVES.md](./ALTERNATIVES.md).
+Several frameworks and tools have implemented Ralph Loop support, demonstrating its generality beyond bash scripts. For a broader comparison including dedicated orchestrators (ralph-orchestrator, Ralph TUI), spec-driven tools (Spec Kit, GSD), and the full agentic coding landscape, see [ALTERNATIVES.md](./ALTERNATIVES.md). For a cybernetics-inspired plugin design guide that improves on these implementations, see [PLUGIN-GUIDE.md](./PLUGIN-GUIDE.md).
 
 ### LangChain / DeepAgents
 

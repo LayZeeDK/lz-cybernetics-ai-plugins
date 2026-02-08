@@ -15,6 +15,7 @@ A knowledge base documenting the Ralph Wiggum Loop technique for autonomous AI c
 | [METRICS.md](./METRICS.md) | Measurement framework for evaluating Ralph Loop effectiveness. Covers core metrics (cost, time, quality, reliability), benchmarking methodology, token tracking, case study data, ROI calculation, and telemetry comparison across implementations |
 | [SECURITY.md](./SECURITY.md) | Security framework for autonomous AI coding loops. Covers threat models, Claude Code built-in sandboxing (native, devcontainer, Docker Desktop), containment strategies, supply chain security, secret management, destructive operations, review protocols, and risk assessment |
 | [CYBERNETICS-ANALYSIS.md](./CYBERNETICS-ANALYSIS.md) | Analysis through first-order, second-order, and management cybernetics frameworks. Maps feedback loops, requisite variety, observation paradoxes, and the Viable System Model onto Ralph patterns |
+| [PLUGIN-GUIDE.md](./PLUGIN-GUIDE.md) | Cybernetics-inspired design guide for building Claude Code plugins that improve on Ralph Loop implementations. Covers 5 design principles, plugin architecture concepts, Task-based context rotation, and a 3-way comparison (bash loop vs Task-based vs hybrid) |
 | [sources/](./sources/) | Primary source materials (blogs, videos, transcripts) |
 
 ## Quick Reference
