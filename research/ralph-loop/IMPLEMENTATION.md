@@ -750,6 +750,8 @@ Tradeoff: Global `AGENTS.md` and user skills will not be loaded.
 
 > "Philosophy: 'It's not if it gets popped, it's when. And what is the blast radius?'" -- [Ralph Playbook](./sources/repo-how-to-ralph-wiggum/)
 
+For a comprehensive security framework covering all containment tiers (native OS sandbox, devcontainers, Docker Desktop sandbox, VM isolation), threat models, supply chain risks, and recommended configurations per risk level, see [SECURITY.md](./SECURITY.md).
+
 ## Alternative Loop Types
 
 Ralph does not need to work through a feature backlog. The loop mechanism is generic -- any task that can be described as "look at repo, improve something, report findings" fits the pattern. Only the prompt changes.

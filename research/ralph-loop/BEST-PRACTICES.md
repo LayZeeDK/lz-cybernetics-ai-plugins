@@ -332,6 +332,8 @@ The Ralph Playbook expands on the security philosophy:
 
 **Escape hatches:** Ctrl+C stops the loop; `git reset --hard` reverts uncommitted changes; regenerate the plan if trajectory goes wrong.
 
+**Claude Code native sandboxing:** Claude Code also ships with a built-in native sandbox that provides OS-level filesystem and network isolation without Docker. Enable with `/sandbox` or `"sandbox": { "enabled": true }` in settings.json. This uses Seatbelt (macOS) or bubblewrap (Linux/WSL2) to restrict writes to the CWD and network access to whitelisted domains. For details on all sandboxing tiers and a full threat model, see [SECURITY.md](./SECURITY.md).
+
 ### 10. Pay To Play
 
 Current open-source models are not reliable enough for Ralph. The underlying model needs to be very capable for the simple loop approach to work.
